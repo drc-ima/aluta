@@ -1,0 +1,12 @@
+{
+    "configurations": [
+        {
+            "name": "Host Core",
+            "type": "python",
+            "request": "launch",
+            "module": "core.main",
+            "jinja": true,
+            "console": "integratedTerminal"
+        }
+    ]
+}
