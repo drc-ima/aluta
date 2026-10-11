@@ -2,7 +2,7 @@
     "configurations": [
         {
             "name": "Host Core",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "core.main",
             "jinja": true,
