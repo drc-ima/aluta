@@ -17,7 +17,9 @@ class FileEmail:
         file_path = self.directory / filename
 
         with file_path.open("xb") as file:
-            file.write(message.as_bytes())
+            msg = message
+            msg = msg.as_bytes() + b"\n"
+            file.write(msg)
 
         return str(file_path)
 

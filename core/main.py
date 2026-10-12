@@ -85,11 +85,11 @@ async def add_request_id_and_elapsed_time(request: Request, call_next):
     if request.query_params:
         params["query"] = dict(request.query_params)
 
-    try:
-        if request.method in ["POST", "PUT", "PATCH"]:
-            params["body"] = await request.json()
-    except Exception:
-        pass
+    # try:
+    #     if request.method in ["POST", "PUT", "PATCH"]:
+    #         params["body"] = await request.json()
+    # except Exception:
+    #     pass
 
     try:
         if request.headers.get("content-type", "").startswith("multipart/form-data"):
@@ -107,7 +107,10 @@ async def add_request_id_and_elapsed_time(request: Request, call_next):
     )
     return response
 
-app.include_router(api_router)
+app.include_router(
+    api_router,
+    prefix="/api/v1"
+)
 
 logger.info("API setup complete")
 

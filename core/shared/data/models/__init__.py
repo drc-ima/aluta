@@ -22,7 +22,9 @@ from shared.data.schemas.domain import (
     UserPermissionDomain,
     UserRoleDomain,
     UserType,
-    UserDomain
+    UserDomain,
+    ModuleDomain,
+    SchoolModuleDomain
 )
 from shared.data.session import Base
 
@@ -151,7 +153,8 @@ class Permission(AuditMixin, Base):
 
     code_name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=True)
-    module: Mapped[str] = mapped_column(String, nullable=False)
+    module_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("module.id", ondelete="CASCADE"))
+    module: Mapped["Module"] = relationship(back_populates="permissions", foreign_keys="[Permission.module_id]")
     role_permissions: Mapped[list["RolePermission"]] = relationship(
         back_populates="permission",
         foreign_keys="[RolePermission.permission_id]"
@@ -223,7 +226,7 @@ class School(AuditMixin, Base):
     staffs: Mapped[list["Staff"]] = relationship(back_populates="school", foreign_keys="[Staff.school_id]")
     positions: Mapped[list["Position"]] = relationship(back_populates="school", foreign_keys="[Position.school_id]")
     departments: Mapped[list["Department"]] = relationship(back_populates="school", foreign_keys="[Department.school_id]")
-
+    modules: Mapped[list["SchoolModule"]] = relationship(back_populates="school", foreign_keys="[SchoolModule.school_id]")
     def to_pydantic(self):
         return SchoolDomain.model_validate(self)
 
@@ -271,6 +274,7 @@ class Staff(AuditMixin, Base):
     user: Mapped[User] = relationship(back_populates="staffs", foreign_keys="[Staff.user_id]")
     school: Mapped[School] = relationship(back_populates="staffs", foreign_keys="[Staff.school_id]")
     parent: Mapped["Staff"] = relationship(foreign_keys="[Staff.parent_id]")
+    children: Mapped[list["Staff"]] = relationship(foreign_keys="[Staff.parent_id]")
     staff_positions: Mapped[list["StaffPosition"]] = relationship(back_populates="staff", foreign_keys="[StaffPosition.staff_id]")
     campuses: Mapped[list["StaffCampus"]] = relationship(back_populates="staff", foreign_keys="[StaffCampus.staff_id]")
     staff_departments: Mapped[list["StaffDepartment"]] = relationship(back_populates="staff", foreign_keys="[StaffDepartment.staff_id]")
@@ -360,3 +364,27 @@ class StaffDepartment(AuditMixin, Base):
 
     def to_pydantic(self):
         return StaffDepartmentDomain.model_validate(self)
+
+
+class Module(AuditMixin, Base):
+    __tablename__ = "module"
+
+    name: Mapped[str] = mapped_column(String, index=True)
+    description: Mapped[str] = mapped_column(String, nullable=True)
+    icon: Mapped[str] = mapped_column(String(50), nullable=True)
+
+    school_modules: Mapped[list["SchoolModule"]] = relationship(back_populates="module", foreign_keys="[SchoolModule.module_id]")
+    permissions: Mapped[list[Permission]] = relationship(back_populates="module", foreign_keys="[Permission.module_id]")
+    def to_pydantic(self):
+        return ModuleDomain.model_validate(self)
+
+
+class SchoolModule(AuditMixin, Base):
+    __tablename__ = "school_module"
+
+    school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("school.id", ondelete="CASCADE"))
+    module_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("module.id", ondelete="CASCADE"))
+    school: Mapped[School] = relationship(back_populates="modules", foreign_keys="[SchoolModule.school_id]")
+    module: Mapped[Module] = relationship(back_populates="school_modules", foreign_keys="[SchoolModule.module_id]")
+    def to_pydantic(self):
+        return SchoolModuleDomain.model_validate(self)

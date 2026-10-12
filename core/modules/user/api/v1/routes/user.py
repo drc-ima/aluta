@@ -1,13 +1,18 @@
 
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from middlewares.logging.logger import logger
-from modules.user.schemas.requests.user import VerifyUserRequest, VerifyUserResponse
+from modules.school.services.school import SchoolServices
+from modules.user.schemas.requests.user import VerifyTokenResponse, VerifyTokenRequest
 from modules.user.services.user import UserServices
 from shared.contents.emails import EMAIL_BODIES
+from shared.data.schemas.domain import SchoolDomain
 from shared.data.schemas.domain.email import EmailMessageSchema
 from shared.data.schemas.exceptions import RecordNotFoundException
-from shared.data.session import get_db
+from shared.data.session import get_db, get_user
 from shared.services.email import email_sender
 
 
@@ -15,11 +20,11 @@ router = APIRouter()
 
 @router.post(
     "/verify",
-    response_model=VerifyUserResponse,
+    response_model=VerifyTokenResponse,
     status_code=200
 )
-async def verify_user(
-    request: VerifyUserRequest,
+def verify_user(
+    request: VerifyTokenRequest,
     db: Session = Depends(get_db)
 ):
     try:
@@ -36,8 +41,8 @@ async def verify_user(
             html_body=email_body
         )
 
-        await email_sender.send(data=email)
-        return VerifyUserResponse(message="User has been verified")
+        email_sender.send(data=email)
+        return VerifyTokenResponse(message="User has been verified")
     except RecordNotFoundException as e:
         logger.error(f"Router: User not found - {e.detail}")
         raise e
@@ -49,3 +54,31 @@ async def verify_user(
         raise HTTPException(
             status_code=500, detail=f"Failed  verifying user: {str(e)}"
         )
+
+
+@router.get(
+    "/schools",
+    # response_model=JSONResponse
+)
+def user_school(
+    user: dict | None = Depends(get_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        user_id = uuid.UUID(user.get("id"))
+        schools: list[SchoolDomain] = SchoolServices().user_active_schools(db, user_id)
+
+        return [school.model_dump(mode="json") for school in schools]
+            
+    except RecordNotFoundException as e:
+        logger.error(f"Router: User not found - {e.detail}")
+        raise e
+    except HTTPException as e:
+        logger.error(f"Router: HTTP error verifying user - {e.detail}")
+        raise e
+    except Exception as e:
+        logger.error(f"Router: Unexpected error verifying user - {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed  verifying user: {str(e)}"
+        )
+

@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy.orm import Session
 
 from modules.school.schemas.requests.school import CreateCampusRequest, RegisterSchoolRequest, SchoolSerializer
-from shared.data.models import Campus, CampusContact, School
+from shared.data.models import Campus, CampusContact, School, Staff
 from shared.data.schemas.domain import CampusDomain, SchoolDomain
 from shared.data.schemas.exceptions import RecordNotFoundException
 
@@ -113,3 +113,43 @@ class SchoolRepository:
         )
 
         return campus.to_pydantic() if campus else None
+
+    def activate_school(db: Session, school_id: uuid.UUID) -> SchoolDomain:
+        school = db.query(School).get(school_id)
+
+        if not school:
+            raise RecordNotFoundException("School", school_id)
+
+        school.verified = True
+        school.active = True
+        db.commit()
+        db.flush()
+        db.refresh(school)
+
+        return school.to_pydantic()
+
+    def deactivate_school(self, db: Session, school_id: uuid.UUID) -> SchoolDomain:
+
+        school = db.query(School).get(school_id)
+
+        if not school:
+            raise RecordNotFoundException("School", school_id)
+
+        school.active = False
+
+        db.commit()
+        db.flush()
+        db.refresh(school)
+
+        return school.to_pydantic()
+
+    def get_schools_by_staff_ids(db: Session, staff_ids: list[uuid.UUID]) -> list[SchoolDomain]:
+
+        schools = (
+            db.query(School)
+            .join(Staff)
+            .filter(Staff.id.in_(staff_ids), School.active == True)
+            .all()
+        )
+
+        return [school.to_pydantic() for school in schools]

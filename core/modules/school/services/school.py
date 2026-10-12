@@ -1,18 +1,21 @@
 
+import uuid
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from handlers.exceptions import exception_catcher
 from middlewares.logging.logger import logger
 from modules.school.schemas.requests.school import RegisterSchoolRequest, SchoolSerializer
 from modules.staff.schemas.requests.staff import CreateStaffRequest
-from modules.user.schemas.requests.user import CreateUserRequest
+from modules.user.schemas.requests.user import CreateUserRequest, VerifyTokenRequest
 from shared.data.repositories.role_repository import RoleRepository
 from shared.data.repositories.school_repository import SchoolRepository
 from shared.data.repositories.staff_repository import StaffRepository
 from shared.data.repositories.user_repository import UserRepository
-from shared.data.schemas.domain import SchoolDomain
+from shared.data.schemas.domain import SchoolDomain, StaffDomain
 from shared.data.schemas.exceptions import RecordAlreadyExistsException, RecordNotFoundException
 from shared.utils.school import generate_domain
+from shared.utils.token import TokenTypes, decode_token
 
 
 class SchoolServices:
@@ -90,6 +93,41 @@ class SchoolServices:
                 return school
         except Exception as e:
             logger.error(f"Service: Error registering school: {e}")
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    def verify_school(db: Session, data: VerifyTokenRequest):
+        try:
+            # decode token
+            decoded = decode_token(data.token, TokenTypes.verify)
+        
+            # get school from payload
+            school_id = uuid.UUID(decoded.get("sub"))
+            school = SchoolRepository.activate_school(db, school_id=school_id)
+        
+            return school if school else None
+        except Exception as e:
+            logger.error(f"Service: Error verifying school: {e}")
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    def user_active_schools(self, db: Session, user_id: uuid.UUID) -> list[SchoolDomain]:
+
+        try:
+            staffs: list[StaffDomain] = StaffRepository.get_user_staffs(db, user_id)
+
+            staff_ids = [staff.id for staff in staffs]
+
+            schools: list[SchoolDomain] = SchoolRepository.get_schools_by_staff_ids(db, staff_ids)
+
+            return schools
+
+        except Exception as e:
+            logger.error(f"Service: Error fetching school: {e}")
             db.rollback()
             raise
         finally:

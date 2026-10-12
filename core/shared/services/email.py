@@ -23,8 +23,8 @@ class EmailService:
             self.backend = FileEmail(
                 directory=directory
             )
-
-    async def send(self, data: EmailMessageSchema) -> str:
+        
+    def send(self, data: EmailMessageSchema) -> str:
         logger.info("Sending email...")
         message = EmailMessage()
         message["From"] = os.getenv("EMAIL_FROM")

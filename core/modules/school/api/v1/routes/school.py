@@ -8,9 +8,10 @@ from middlewares.logging.logger import logger
 from modules.school.schemas.requests.school import RegisterSchoolRequest
 from modules.school.schemas.responses import SchoolResponse
 from modules.school.services.school import SchoolServices
+from modules.user.schemas.requests.user import VerifyTokenRequest, VerifyTokenResponse
 from modules.user.services.user import UserServices
 from shared.data.schemas.domain.email import EmailMessageSchema
-from shared.data.schemas.exceptions import RecordAlreadyExistsException
+from shared.data.schemas.exceptions import RecordAlreadyExistsException, RecordNotFoundException
 from shared.data.session import get_db
 from sqlalchemy.orm import Session
 
@@ -25,7 +26,7 @@ router = APIRouter()
     "/register",
     response_model=SchoolResponse
 )
-async def register(
+def register(
     request: RegisterSchoolRequest,
     db: Session = Depends(get_db)
 ):
@@ -69,8 +70,8 @@ async def register(
             query = urlencode({"token": token})
             return f"{frontend_url}/verify?{query}"
 
-        school_message = EMAIL_BODIES.get("verification", {}).get("school")
-        creator_message = EMAIL_BODIES.get("verification", {}).get("user")
+        school_message = EMAIL_BODIES.get("verification", {}).get("school", {})
+        creator_message = EMAIL_BODIES.get("verification", {}).get("user", {})
         
         
         school_name = registration.name
@@ -78,25 +79,27 @@ async def register(
         full_name = user.full_name()
 
         # send school verification email
-        school_body = email_sender.body_context(school_message, verification_link=build_verification_url(token=school_verify_token), school_name=school_name)
+        school_email_text = email_sender.body_context(school_message.get("text"), verification_link=build_verification_url(token=school_verify_token), school_name=school_name)
+        school_email_html = email_sender.body_context(school_message.get("html"), verification_link=build_verification_url(token=school_verify_token), school_name=school_name)
         email_message = EmailMessageSchema(
             to=[registration.business_email,],
             subject="Welcome to Aluta",
-            body=school_body,
-            html_body=school_body
+            body=school_email_text,
+            html_body=school_email_html
         )
-        await email_sender.send(data=email_message)
+        email_sender.send(data=email_message)
 
         # send creator verification email
-        creator_body = email_sender.body_context(creator_message, verification_link=build_verification_url(token=creator_verify_token), member_type=member_type, full_name=full_name, school_name=school_name)
+        creator_email_text = email_sender.body_context(creator_message.get("text"), verification_link=build_verification_url(token=creator_verify_token), member_type=member_type, full_name=full_name, school_name=school_name)
+        creator_email_html = email_sender.body_context(creator_message.get("html"), verification_link=build_verification_url(token=creator_verify_token), member_type=member_type, full_name=full_name, school_name=school_name)
         email_message = EmailMessageSchema(
             to=[user.email,],
             subject="Welcome to Aluta from {school_name}".format(school_name=school_name),
-            body=creator_body,
-            html_body=creator_body
+            body=creator_email_text,
+            html_body=creator_email_html
         )
 
-        await email_sender.send(data=email_message)
+        email_sender.send(data=email_message)
 
         return SchoolResponse(school_id=registration.id, message="New school registered. Next step is to verify business email and personal email to activate both.")
     except RecordAlreadyExistsException as e:
@@ -109,4 +112,42 @@ async def register(
         logger.error(f"Router: Unexpected error registering school - {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed  registering school: {str(e)}"
+        )
+
+
+@router.post(
+    "/verify",
+    response_model=VerifyTokenResponse,
+    status_code=200
+)
+def verify_school(
+    request: VerifyTokenRequest,
+    db: Session = Depends(get_db)
+):
+    try:
+        school = SchoolServices.verify_school(db, data=request)
+
+        email_message = EMAIL_BODIES.get("verified", {}).get("school")
+        
+        email_body = email_sender.body_context(email_message)
+        
+        email = EmailMessageSchema(
+            to=[school.business_email,],
+            subject="Welcome to Aluta",
+            body=email_body,
+            html_body=email_body
+        )
+
+        email_sender.send(data=email)
+        return VerifyTokenResponse(message="School has been verified")
+    except RecordNotFoundException as e:
+        logger.error(f"Router: School not found - {e.detail}")
+        raise e
+    except HTTPException as e:
+        logger.error(f"Router: HTTP error verifying school - {e.detail}")
+        raise e
+    except Exception as e:
+        logger.error(f"Router: Unexpected error verifying school - {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed  verifying school: {str(e)}"
         )

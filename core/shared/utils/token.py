@@ -8,6 +8,8 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 import jwt
 from sqlalchemy.orm import Session
+from handlers.exceptions import exception_catcher
+from middlewares.logging.logger import logger
 from shared.data.models import User
 from shared.data.schemas.domain import UserDomain
 from shared.data.session import get_db
@@ -18,6 +20,7 @@ class TokenTypes(str, Enum):
     refresh = "refresh"
     verify = "verify"
 
+@exception_catcher
 def token(
     id: str,
     type: TokenTypes,
@@ -54,6 +57,7 @@ def token(
             algorithm=os.getenv("JWT_ALGORITHM")
         )
     except Exception as e:
+        logger.error(f"Utils: Token creation error: {e}")
         raise e
 
 def decode_token(token: str, type: TokenTypes) -> dict:

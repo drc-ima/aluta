@@ -33,8 +33,8 @@ class CreateUserRequest(BaseRequest):
         return v
 
 
-class VerifyUserRequest(BaseRequest):
+class VerifyTokenRequest(BaseRequest):
     token: str
 
-class VerifyUserResponse(BaseRequest):
+class VerifyTokenResponse(BaseRequest):
     message: str

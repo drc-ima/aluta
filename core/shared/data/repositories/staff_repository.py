@@ -43,3 +43,10 @@ class StaffRepository:
 
         return staff_campus.to_pydantic()
     
+    def get_user_staffs(db: Session, user_id: uuid.UUID) -> list[StaffDomain]:
+
+        staffs = (
+            db.query(Staff).filter(Staff.user_id == user_id)
+        )
+
+        return [staff.to_pydantic() for staff in staffs]

@@ -78,10 +78,14 @@ class PermissionDomain(AuditSchemaMixin, BaseModel):
 
     code_name: str
     description: Optional[str]
-    module: str
+    module_id: uuid.UUID
+    module: Optional["ModuleDomain"]
     # role_permissions: list["RolePermissionDomain"] = []
     # user_permissions: list["UserPermissionDomain"] = []
 
+    @property
+    def permission(self) -> str:
+        return self.code_name + "-" + self.module.name
 
 class RolePermissionDomain(AuditSchemaMixin, BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -116,6 +120,7 @@ class SchoolDomain(AuditSchemaMixin, BaseModel):
     positions: list["PositionDomain"] = Field(default_factory=list)
     staffs: list["StaffDomain"] = Field(default_factory=list)
     departments: list["DepartmentDomain"] = Field(default_factory=list)
+    modules: list["SchoolModuleDomain"] = Field(default_factory=list)
 
 
 class CampusDomain(AuditSchemaMixin, BaseModel):
@@ -156,8 +161,9 @@ class StaffDomain(AuditSchemaMixin, BaseModel):
     # user: Optional[UserDomain] = None
     # school: Optional[SchoolDomain] = None
     parent: Optional["StaffDomain"] = None
+    children: list["StaffDomain"] = Field(default_factory=list)
     staff_positions: list["StaffPositionDomain"] = Field(default_factory=list)
-    campuses: list[CampusDomain] = Field(default_factory=list)
+    campuses: list["StaffCampusDomain"] = Field(default_factory=list)
     staff_departments: list["StaffDepartmentDomain"] = Field(default_factory=list)
 
 
@@ -221,3 +227,20 @@ class StaffDepartmentDomain(AuditSchemaMixin, BaseModel):
 
     # staff: Optional[StaffDomain] = None
     department: Optional[DepartmentDomain] = None
+
+class ModuleDomain(AuditSchemaMixin, BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    name: str
+    description: Optional[str] = None
+    icon: Optional[str] = None
+
+
+class SchoolModuleDomain(AuditSchemaMixin, BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    module_id: uuid.UUID
+    school_id: uuid.UUID
+    module: Optional[ModuleDomain] = None
+
+

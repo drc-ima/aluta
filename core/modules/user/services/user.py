@@ -7,7 +7,7 @@ from fastapi import HTTPException, status
 from handlers.exceptions import exception_catcher
 from middlewares.logging.logger import logger
 from modules.token.schemas.requests import TokenRequest
-from modules.user.schemas.requests.user import CreateUserRequest, VerifyUserRequest
+from modules.user.schemas.requests.user import CreateUserRequest, VerifyTokenRequest
 from modules.user.services.role import RoleServices
 from shared.data.models import User
 from shared.data.repositories.user_repository import UserRepository
@@ -89,7 +89,7 @@ class UserServices:
         finally:
             db.close()
 
-    def verify_user(self, db: Session, request: VerifyUserRequest) -> UserDomain | None:
+    def verify_user(self, db: Session, request: VerifyTokenRequest) -> UserDomain | None:
         try:
             # decode token
             decoded = decode_token(request.token, TokenTypes.verify)
@@ -100,7 +100,7 @@ class UserServices:
 
             return user if user else None
         except Exception as e:
-            logger.error(f"Service: Error creating user: {e}")
+            logger.error(f"Service: Error verifying user: {e}")
             db.rollback()
             raise
         finally:

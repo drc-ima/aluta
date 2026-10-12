@@ -96,7 +96,7 @@ class UserRepository:
 
         return user.to_pydantic()
 
-    def deactivate_user(self, db: Session, user_id: str) -> UserDomain:
+    def deactivate_user(self, db: Session, user_id: uuid.UUID) -> UserDomain:
 
         user = db.query(User).get(user_id)
 

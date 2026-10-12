@@ -7,15 +7,15 @@ api_router = APIRouter()
 
 api_router.include_router(
     user_router,
-    prefix="/v1/user"
+    prefix="/user"
 )
 
 api_router.include_router(
     token_router,
-    prefix="/v1/token"
+    prefix="/token"
 )
 
 api_router.include_router(
     school_router,
-    prefix="/v1/school"
+    prefix="/school"
 )

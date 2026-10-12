@@ -11,7 +11,9 @@ def get_request_id() -> str:
 def get_auth_token() -> str:
     return auth_token_context.get()
 
-def get_user_id_email() -> dict:
+def get_user_id_email() -> dict | None:
+    if user_email_context.get() is None:
+        return None
     return {
         "email": user_email_context.get(),
         "id": user_id_context.get()
