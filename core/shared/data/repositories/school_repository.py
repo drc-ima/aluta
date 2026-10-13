@@ -32,17 +32,11 @@ class SchoolRepository:
     def create_school(
             self, 
             db: Session,
-            data: SchoolSerializer
+            data: SchoolDomain
     ) -> SchoolDomain:
 
         school = School(
-            name=data.name,
-            business_email=data.business_email.lower(),
-            active=False,
-            domain=data.domain,
-            slug=data.slug,
-            created_by_id=data.created_by_id,
-            updated_by_id=data.created_by_id
+            **data.model_dump(exclude_unset=True)
         )
 
         db.add(school)

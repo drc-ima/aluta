@@ -2,18 +2,17 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional, Any
 
-from uuid import UUID
 import uuid
 
 from pydantic import BaseModel, ConfigDict, Field
 
 class AuditSchemaMixin:
     
-    id: UUID
-    created_at: datetime
-    updated_at: datetime
-    created_by_id: Optional[UUID] = None
-    updated_by_id: Optional[UUID] = None
+    id: Optional[uuid.UUID] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    created_by_id: Optional[uuid.UUID] = None
+    updated_by_id: Optional[uuid.UUID] = None
 
 
 class UserType(str, Enum):
@@ -58,9 +57,9 @@ class RoleDomain(AuditSchemaMixin, BaseModel):
     name: str
     default: bool
     school_id: Optional[uuid.UUID] = None
-    school: Optional[Any] = None
-    created_by: Optional[UserDomain] = None
-    updated_by: Optional[UserDomain] = None
+    # school: Optional["SchoolDomain"] = None
+    # created_by: Optional[UserDomain] = None
+    # updated_by: Optional[UserDomain] = None
     role_permissions: list["RolePermissionDomain"] = Field(default_factory=list)
     # user_permissions: list["UserRoleDomain"] = Field(default_factory=list)
 
@@ -79,13 +78,9 @@ class PermissionDomain(AuditSchemaMixin, BaseModel):
     code_name: str
     description: Optional[str]
     module_id: uuid.UUID
-    module: Optional["ModuleDomain"]
+    # module: Optional["ModuleDomain"]
     # role_permissions: list["RolePermissionDomain"] = []
     # user_permissions: list["UserPermissionDomain"] = []
-
-    @property
-    def permission(self) -> str:
-        return self.code_name + "-" + self.module.name
 
 class RolePermissionDomain(AuditSchemaMixin, BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -114,8 +109,7 @@ class SchoolDomain(AuditSchemaMixin, BaseModel):
     business_email: str
     website: Optional[str] = None
     slug: Optional[str] = None
-    # created_by: Optional[UserDomain] = None
-    # updated_by: Optional[UserDomain] = None
+
     roles: list[RoleDomain] = Field(default_factory=list)
     positions: list["PositionDomain"] = Field(default_factory=list)
     staffs: list["StaffDomain"] = Field(default_factory=list)
@@ -157,6 +151,7 @@ class StaffDomain(AuditSchemaMixin, BaseModel):
     user_id: uuid.UUID
     staff_no: str
     school_id: uuid.UUID
+    active: Optional[bool] = False
 
     # user: Optional[UserDomain] = None
     # school: Optional[SchoolDomain] = None
@@ -234,6 +229,8 @@ class ModuleDomain(AuditSchemaMixin, BaseModel):
     name: str
     description: Optional[str] = None
     icon: Optional[str] = None
+    default: Optional[bool] = False
+    permissions: list[PermissionDomain] = Field(default_factory=list)
 
 
 class SchoolModuleDomain(AuditSchemaMixin, BaseModel):
@@ -244,3 +241,14 @@ class SchoolModuleDomain(AuditSchemaMixin, BaseModel):
     module: Optional[ModuleDomain] = None
 
 
+class AcademicPeriodDomain(AuditSchemaMixin, BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    school_id: uuid.UUID
+    name: str
+    start_date: datetime
+    end_date: datetime
+    parent_id: Optional[uuid.UUID] = None
+
+    parent: Optional["AcademicPeriodDomain"] = None
+    children: list["AcademicPeriodDomain"] = Field(default_factory=list)

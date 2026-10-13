@@ -1,6 +1,7 @@
 
 import json
 import os
+import traceback
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import JSONResponse
@@ -46,10 +47,10 @@ def normal_login(
                 {
                     "id": str(role.id), 
                     "name": role.role.name,
-                    "permissions": [perm.permission.permission for perm in role.role.role_permissions]
+                    "permissions": [perm.permission.code_name for perm in role.role.role_permissions]
                 } for role in user.user_roles
             ],
-            permissions=[perm.permission.permission for perm in user.user_permissions],
+            permissions=[perm.permission.code_name for perm in user.user_permissions],
             staffs=[
                 {
                     "id": str(staff.id),
@@ -74,10 +75,10 @@ def normal_login(
                 {
                     "id": str(role.id), 
                     "name": role.role.name,
-                    "permissions": [perm.permission.permission for perm in role.role.role_permissions]
+                    "permissions": [perm.permission.code_name for perm in role.role.role_permissions]
                 } for role in user.user_roles
             ],
-            permissions=[perm.permission.permission for perm in user.user_permissions],
+            permissions=[perm.permission.code_name for perm in user.user_permissions],
             staffs=[
                 {
                     "id": str(staff.id),
@@ -111,6 +112,7 @@ def normal_login(
         raise e
     except Exception as e:
         logger.error(f"Router: Unexpected error logging in - {e}")
+        logger.error(traceback.format_exc())
         raise HTTPException(
             status_code=500, detail=f"Failed to login: {str(e)}"
         )

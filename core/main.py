@@ -7,7 +7,8 @@ from middlewares.context.request import (
     auth_token_context,
     request_id_context,
     user_email_context,
-    user_id_context
+    user_id_context,
+    user_roles_context
 )
 from middlewares.logging.logger import logger
 from fastapi import FastAPI, Request
@@ -74,6 +75,7 @@ async def add_request_id_and_elapsed_time(request: Request, call_next):
             else:
                 user_id_context.set(payload.get("sub"))
                 user_email_context.set(payload.get("upn"))
+                user_roles_context.set(payload.get("roles"))
                 auth_token_context.set(token)
     else:
         logger.warning(

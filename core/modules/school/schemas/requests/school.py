@@ -15,7 +15,6 @@ class SchoolCreatorRequest(BaseRequest):
     email: EmailStr
     phone: Optional[str]
     password: str = Field(..., min_length=8)
-    role_id: uuid.UUID
 
     @field_validator("password")
     @classmethod

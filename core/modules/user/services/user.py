@@ -21,6 +21,7 @@ from shared.utils.token import TokenTypes, decode_token
 
 class UserServices:
 
+    @exception_catcher
     def login_service(self, db: Session, request: TokenRequest) -> UserDomain | None:
         try:
             with db.begin():

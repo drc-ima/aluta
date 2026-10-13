@@ -5,6 +5,7 @@ from sqlalchemy import UUID, Boolean, DateTime, ForeignKey, Integer, String, Uni
 from sqlalchemy.orm import mapped_column, relationship, Mapped, declared_attr, deferred, configure_mappers
 from shared.data.schemas.domain import (
     EMPLOYMENT_TYPE,
+    AcademicPeriodDomain,
     CampusContactDomain,
     CampusDomain,
     ContactType,
@@ -221,6 +222,7 @@ class School(AuditMixin, Base):
     domain: Mapped[str] = mapped_column(String)
     business_email: Mapped[str] = mapped_column(String, unique=True)
     slug: Mapped[str] = mapped_column(String, nullable=True)
+    website: Mapped[str] = mapped_column(String, nullable=True)
 
     roles: Mapped[list[Role]] = relationship(back_populates="school", foreign_keys="[Role.school_id]")
     staffs: Mapped[list["Staff"]] = relationship(back_populates="school", foreign_keys="[Staff.school_id]")
@@ -270,11 +272,22 @@ class Staff(AuditMixin, Base):
     staff_no: Mapped[str] = mapped_column(String, nullable=False)
     school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("school.id", ondelete="CASCADE"))
     parent_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("staff.id", ondelete="SET NULL"), nullable=True)
+    active: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
     
     user: Mapped[User] = relationship(back_populates="staffs", foreign_keys="[Staff.user_id]")
     school: Mapped[School] = relationship(back_populates="staffs", foreign_keys="[Staff.school_id]")
-    parent: Mapped["Staff"] = relationship(foreign_keys="[Staff.parent_id]")
-    children: Mapped[list["Staff"]] = relationship(foreign_keys="[Staff.parent_id]")
+    parent: Mapped["AcademicPeriod"] = relationship(
+        "Staff",
+        back_populates="children",
+        remote_side="Staff.id",
+        foreign_keys="[Staff.parent_id]"
+    )
+    children: Mapped[list["Staff"]] = relationship(
+        "Staff",
+        back_populates="parent",
+        foreign_keys=[parent_id],
+        passive_deletes=True,
+    )
     staff_positions: Mapped[list["StaffPosition"]] = relationship(back_populates="staff", foreign_keys="[StaffPosition.staff_id]")
     campuses: Mapped[list["StaffCampus"]] = relationship(back_populates="staff", foreign_keys="[StaffCampus.staff_id]")
     staff_departments: Mapped[list["StaffDepartment"]] = relationship(back_populates="staff", foreign_keys="[StaffDepartment.staff_id]")
@@ -372,6 +385,7 @@ class Module(AuditMixin, Base):
     name: Mapped[str] = mapped_column(String, index=True)
     description: Mapped[str] = mapped_column(String, nullable=True)
     icon: Mapped[str] = mapped_column(String(50), nullable=True)
+    default: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
 
     school_modules: Mapped[list["SchoolModule"]] = relationship(back_populates="module", foreign_keys="[SchoolModule.module_id]")
     permissions: Mapped[list[Permission]] = relationship(back_populates="module", foreign_keys="[Permission.module_id]")
@@ -388,3 +402,29 @@ class SchoolModule(AuditMixin, Base):
     module: Mapped[Module] = relationship(back_populates="school_modules", foreign_keys="[SchoolModule.module_id]")
     def to_pydantic(self):
         return SchoolModuleDomain.model_validate(self)
+
+
+class AcademicPeriod(AuditMixin, Base):
+    __tablename__ = "academic_period"
+
+    school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("school.id", ondelete="CASCADE"))
+    name: Mapped[str] = mapped_column(String, index=True)
+    start_date: Mapped[datetime] = mapped_column(DateTime)
+    end_date: Mapped[datetime] = mapped_column(DateTime)
+    parent_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("academic_period.id", ondelete="SET NULL"), nullable=True)
+
+    parent: Mapped["AcademicPeriod"] = relationship(
+        "AcademicPeriod",
+        back_populates="children",
+        remote_side="AcademicPeriod.id",
+        foreign_keys="[AcademicPeriod.parent_id]"
+    )
+    children: Mapped[list["AcademicPeriod"]] = relationship(
+        "AcademicPeriod",
+        back_populates="parent",
+        foreign_keys=[parent_id],
+        passive_deletes=True,
+    )
+
+    def to_pydantic(self):
+        return AcademicPeriodDomain.model_validate(self)

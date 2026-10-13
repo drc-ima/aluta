@@ -41,6 +41,7 @@ def exception_catcher(func: callable) -> callable:
             logger.error(
                 f"HTTPException in function '{func.__name__}': {http_exc.detail}"
             )
+            logger.error(traceback.format_exc())
             raise http_exc
         except ValueError as ve:
             logger.warning(

@@ -50,19 +50,20 @@ class UserRepository:
 
         return user.to_pydantic() if user else None
 
-    def create_user(self, db: Session, data: CreateUserRequest) -> UserDomain:
+    def create_user(self, db: Session, data: UserDomain) -> UserDomain:
 
-        username = data.email if data.username_field == "Email" else data.phone
+        # username = data.email if data.username_field == "Email" else data.phone
         
         user = User(
-            first_name=data.first_name,
-            middle_name=data.middle_name,
-            last_name=data.last_name,
-            user_type=data.user_type,
-            email=data.email,
-            phone=data.phone,
-            username=username,
-            is_active=False,
+            **data.model_dump(exclude_unset=True),
+            # first_name=data.first_name,
+            # middle_name=data.middle_name,
+            # last_name=data.last_name,
+            # user_type=data.user_type,
+            # email=data.email,
+            # phone=data.phone,
+            # username=username,
+            # is_active=False,
         )
 
         user.set_password(data.password)
@@ -72,9 +73,9 @@ class UserRepository:
         db.flush()
         db.refresh(user)
 
-        if data.role_id:
-            user_role = UserRole(user_id=user.id, role_id=data.role_id)
-            db.add(user_role)
+        # if data.role_id:
+        #     user_role = UserRole(user_id=user.id, role_id=data.role_id)
+        #     db.add(user_role)
         
         db.flush()
         db.refresh(user)

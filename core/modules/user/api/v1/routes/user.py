@@ -1,4 +1,5 @@
 
+import traceback
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -74,11 +75,12 @@ def user_school(
         logger.error(f"Router: User not found - {e.detail}")
         raise e
     except HTTPException as e:
-        logger.error(f"Router: HTTP error verifying user - {e.detail}")
+        logger.error(f"Router: HTTP error fetching user school - {e.detail}")
         raise e
     except Exception as e:
-        logger.error(f"Router: Unexpected error verifying user - {e}")
+        logger.error(f"Router: Unexpected error fetching user school - {e}")
+        logger.error(traceback.format_exc())
         raise HTTPException(
-            status_code=500, detail=f"Failed  verifying user: {str(e)}"
+            status_code=500, detail=f"Failed  fetching user school: {str(e)}"
         )
 

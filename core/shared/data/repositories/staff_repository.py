@@ -12,15 +12,10 @@ from shared.data.schemas.exceptions import RecordNotFoundException
 
 class StaffRepository:
 
-    def create_staff(self, db: Session, data: CreateStaffRequest, created_by_id: uuid.UUID | None) -> StaffDomain:
+    def create_staff(self, db: Session, data: StaffDomain) -> StaffDomain:
 
         staff = Staff(
-            user_id=data.user_id,
-            staff_no=data.staff_no,
-            school_id=data.school_id,
-            parent_id=data.parent_id,
-            created_by_id=created_by_id,
-            updated_by_id=created_by_id
+            **data.model_dump(exclude_unset=True)
         )
 
         db.add(staff)
