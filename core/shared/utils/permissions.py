@@ -1,24 +1,38 @@
 
 
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 
 from middlewares.context.request import get_user_roles
-from shared.utils.token import get_current_user
+from shared.data.session import get_user
 
 
-def require_permission(permission: str):
-    user_roles = get_user_roles()
+def require_permission(*permissions: str):
+    def permission_checker(
+        current_user = Depends(get_user),
+    ):
+        user_roles = get_user_roles()
 
-    if len(user_roles) == 0:
-        raise HTTPException(
-            status_code=403,
-            detail="Insufficient permissions"
-        )
+        if not user_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions",
+            )
 
-    permissions = []
-    for role in user_roles:
-        for perm in role:
-            permissions.append(perm)
+        user_permissions = {
+            perm
+            for role in user_roles
+            for perm in role.get("permissions", [])
+        }
 
-    permissions = list(set(permissions))
+        missing_permissions = set(permissions) - user_permissions
+
+        if missing_permissions:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions",
+            )
+
+        return current_user
+
+    return permission_checker

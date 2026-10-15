@@ -1,10 +1,48 @@
 from datetime import datetime
+from encodings.punycode import T
 from enum import Enum
-from typing import Optional, Any
+from typing import Callable, Iterable, Optional, Any
 
 import uuid
 
 from pydantic import BaseModel, ConfigDict, Field
+
+def build_tree(
+    items: list[T],
+    *,
+    get_id: Callable[[T], Any] = lambda item: item.id,
+    get_parent_id: Callable[[T], Any] = lambda item: item.parent_id,
+) -> list[dict[str, Any]]:
+    items_by_parent: dict[Any, list[T]] = {}
+
+    for item in items:
+        parent_id = get_parent_id(item)
+        items_by_parent.setdefault(parent_id, []).append(item)
+        
+        
+
+    def build_node(item: T) -> dict[str, Any]:
+        if hasattr(item, "model_dump"):
+            node = item.model_dump(exclude={"children"})
+        elif hasattr(item, "__mapper__"):
+            node = {
+                column.key: getattr(item, column.key)
+                for column in item.__mapper__.column_attrs
+            }
+        else:
+            node = vars(item).copy()
+        
+        node["children"] = [
+            build_node(child)
+            for child in items_by_parent.get(get_id(item), [])
+        ]
+
+        return node
+
+    return [
+        build_node(item)
+        for item in items_by_parent.get(None, [])
+    ]
 
 class AuditSchemaMixin:
     
@@ -125,6 +163,8 @@ class CampusDomain(AuditSchemaMixin, BaseModel):
     address: Optional[str] = None
     is_main: Optional[bool] = None
     school_id: Optional[uuid.UUID] = None
+
+    academic_periods: list["AcademicPeriodDomain"]
     # school: Optional[SchoolDomain] = None
     # created_by: Optional[UserDomain] = None
     # updated_by: Optional[UserDomain] = None
@@ -156,9 +196,9 @@ class StaffDomain(AuditSchemaMixin, BaseModel):
     # user: Optional[UserDomain] = None
     # school: Optional[SchoolDomain] = None
     parent: Optional["StaffDomain"] = None
-    children: list["StaffDomain"] = Field(default_factory=list)
+    # children: list["StaffDomain"] = Field(default_factory=list)
     staff_positions: list["StaffPositionDomain"] = Field(default_factory=list)
-    campuses: list["StaffCampusDomain"] = Field(default_factory=list)
+    staff_campuses: list["StaffCampusDomain"] = Field(default_factory=list)
     staff_departments: list["StaffDepartmentDomain"] = Field(default_factory=list)
 
 
@@ -211,7 +251,7 @@ class DepartmentDomain(AuditSchemaMixin, BaseModel):
     name: str
     description: Optional[str] = None
 
-    school: Optional[SchoolDomain] = None
+    # school: Optional[SchoolDomain] = None
 
 class StaffDepartmentDomain(AuditSchemaMixin, BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -249,6 +289,19 @@ class AcademicPeriodDomain(AuditSchemaMixin, BaseModel):
     start_date: datetime
     end_date: datetime
     parent_id: Optional[uuid.UUID] = None
+    campus_id: Optional[uuid.UUID] = None
 
     parent: Optional["AcademicPeriodDomain"] = None
-    children: list["AcademicPeriodDomain"] = Field(default_factory=list)
+    # children: list["AcademicPeriodDomain"] = Field(default_factory=list)
+
+class UserModuleDefaultDomain(AuditSchemaMixin, BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    entity_id: uuid.UUID
+    module_id: uuid.UUID
+
+
+class PhotoDomain(AuditSchemaMixin, BaseModel):
+    entity_id: uuid.UUID
+    blob_url: str
+    metadata: Optional[str] = None

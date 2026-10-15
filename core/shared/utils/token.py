@@ -60,18 +60,21 @@ def token(
         logger.error(f"Utils: Token creation error: {e}")
         raise e
 
-def decode_token(token: str, type: TokenTypes) -> dict:
-    payload = jwt.decode(
-        token,
-        os.getenv("SECRET_KEY") + type,
-        algorithms=[os.getenv("JWT_ALGORITHM")],
-        options={"require": ["sub", "exp", "iat"]},
-    )
-
+def decode_token(token: str, type: TokenTypes) -> dict | None:
+    try:
+        payload = jwt.decode(
+            token,
+            os.getenv("SECRET_KEY") + type,
+            algorithms=[os.getenv("JWT_ALGORITHM")],
+            options={"require": ["sub", "exp", "iat"]},
+        )
+        return payload
+    except:
+        return None
     # if payload.get("type") != type:
     #     raise jwt.InvalidTokenError("Invalid token type")
 
-    return payload
+    
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/token"

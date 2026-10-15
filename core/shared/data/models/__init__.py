@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 import uuid
 from middlewares.context.password import pwd_context
-from sqlalchemy import UUID, Boolean, DateTime, ForeignKey, Integer, String, UniqueConstraint, func, text
+from sqlalchemy import UUID, Boolean, Date, DateTime, ForeignKey, Integer, String, UniqueConstraint, func, text
 from sqlalchemy.orm import mapped_column, relationship, Mapped, declared_attr, deferred, configure_mappers
 from shared.data.schemas.domain import (
     EMPLOYMENT_TYPE,
@@ -11,6 +11,7 @@ from shared.data.schemas.domain import (
     ContactType,
     DepartmentDomain,
     PermissionDomain,
+    PhotoDomain,
     PositionDomain,
     RoleDomain,
     RolePermissionDomain,
@@ -20,6 +21,7 @@ from shared.data.schemas.domain import (
     StaffDepartmentDomain,
     StaffDomain,
     StaffPositionDomain,
+    UserModuleDefaultDomain,
     UserPermissionDomain,
     UserRoleDomain,
     UserType,
@@ -242,6 +244,7 @@ class Campus(AuditMixin, Base):
     is_main: Mapped[bool] = mapped_column(Boolean)
     school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("school.id", ondelete="CASCADE"), nullable=False, index=True)
 
+    academic_periods: Mapped[list["AcademicPeriod"]] = relationship(back_populates="campus", foreign_keys="[AcademicPeriod.campus_id]")
     contacts: Mapped[list["CampusContact"]] = relationship(back_populates="campus", foreign_keys="[CampusContact.campus_id]")
     staffs: Mapped[list["StaffCampus"]] = relationship(back_populates="campus", foreign_keys="[StaffCampus.campus_id]")
 
@@ -289,7 +292,7 @@ class Staff(AuditMixin, Base):
         passive_deletes=True,
     )
     staff_positions: Mapped[list["StaffPosition"]] = relationship(back_populates="staff", foreign_keys="[StaffPosition.staff_id]")
-    campuses: Mapped[list["StaffCampus"]] = relationship(back_populates="staff", foreign_keys="[StaffCampus.staff_id]")
+    staff_campuses: Mapped[list["StaffCampus"]] = relationship(back_populates="staff", foreign_keys="[StaffCampus.staff_id]")
     staff_departments: Mapped[list["StaffDepartment"]] = relationship(back_populates="staff", foreign_keys="[StaffDepartment.staff_id]")
 
     def to_pydantic(self):
@@ -345,7 +348,7 @@ class StaffCampus(AuditMixin, Base):
     campus_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("campus.id", ondelete="CASCADE"), nullable=False)
 
     campus: Mapped[Campus] = relationship(back_populates="staffs")
-    staff: Mapped[Staff] = relationship(back_populates="campuses")
+    staff: Mapped[Staff] = relationship(back_populates="staff_campuses")
 
     def to_pydantic(self):
         return StaffCampusDomain.model_validate(self)
@@ -412,7 +415,9 @@ class AcademicPeriod(AuditMixin, Base):
     start_date: Mapped[datetime] = mapped_column(DateTime)
     end_date: Mapped[datetime] = mapped_column(DateTime)
     parent_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("academic_period.id", ondelete="SET NULL"), nullable=True)
+    campus_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("campus.id", ondelete="SET NULL"), nullable=True)
 
+    campus: Mapped[Campus] = relationship(back_populates="academic_periods", foreign_keys="[AcademicPeriod.campus_id]")
     parent: Mapped["AcademicPeriod"] = relationship(
         "AcademicPeriod",
         back_populates="children",
@@ -428,3 +433,22 @@ class AcademicPeriod(AuditMixin, Base):
 
     def to_pydantic(self):
         return AcademicPeriodDomain.model_validate(self)
+
+class UserModuleDefault(AuditMixin, Base):
+    __tablename__ = "user_module_default"
+
+    entity_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    module_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("module.id", ondelete="CASCADE"), nullable=False)
+
+    def to_pydantic(self):
+        return UserModuleDefaultDomain.model_validate(self)
+
+class Photo(AuditMixin, Base):
+    __tablename__ = "photo"
+
+    entity_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    blob_url: Mapped[str] = mapped_column(String, nullable=False)
+    metadata: Mapped[str] = mapped_column(String, nullable=True)
+
+    def to_pydantic(self):
+        return PhotoDomain.mode_validate(self)

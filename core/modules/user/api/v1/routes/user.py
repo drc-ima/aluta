@@ -59,6 +59,7 @@ def verify_user(
 
 @router.get(
     "/schools",
+    status_code=200
     # response_model=JSONResponse
 )
 def user_school(

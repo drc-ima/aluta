@@ -6,6 +6,7 @@ auth_token_context = ContextVar("auth_token", default=None)
 user_id_context = ContextVar("user_id", default=None)
 user_email_context = ContextVar("user_email", default=None)
 user_roles_context = ContextVar("user_roles", default=[])
+refresh_token_context = ContextVar("refresh_token", default=None)
 
 def get_request_id() -> str:
     return request_id_context.get()
@@ -23,3 +24,6 @@ def get_user_id_email() -> dict | None:
 
 def get_user_roles() -> list[dict[str, Any]]:
     return user_roles_context.get()
+
+def get_refresh_token() -> str:
+    return refresh_token_context.get()

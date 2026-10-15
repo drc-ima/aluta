@@ -8,7 +8,8 @@ from middlewares.context.request import (
     request_id_context,
     user_email_context,
     user_id_context,
-    user_roles_context
+    user_roles_context,
+    refresh_token_context
 )
 from middlewares.logging.logger import logger
 from fastapi import FastAPI, Request
@@ -46,7 +47,8 @@ app.add_middleware(
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
-    expose_headers=["X-Request-ID", 'X-Elapsed-Time'],
+    allow_headers=["*"],
+    expose_headers=["X-Request-ID", 'X-Elapsed-Time', "Authorization"],
 )
 
 @app.middleware("http")
@@ -59,6 +61,7 @@ async def add_request_id_and_elapsed_time(request: Request, call_next):
         return response
 
     auth_header = request.headers.get("Authorization")
+    refresh_token = request.cookies.get("_aluta_sess")
     if auth_header:
         if auth_header.startswith("Bearer "):
             token_split = auth_header.split(" ")
@@ -82,6 +85,14 @@ async def add_request_id_and_elapsed_time(request: Request, call_next):
             f"[Middleware]: No Authorization header found in request to {request.url.path}"
         )
 
+    if refresh_token:
+        payload = decode_token(token=refresh_token, type="refresh")
+        if not payload:
+            logger.error(
+                f"[Middleware]: Invalid Refresh token found in request to {request.url.path}"
+            )
+        else:
+            refresh_token_context.set(refresh_token)
     start_time = time.time()
     params = {}
     if request.query_params:
