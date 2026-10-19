@@ -1,5 +1,6 @@
 
 
+from datetime import datetime, timezone
 import uuid
 
 from fastapi import HTTPException, status
@@ -7,11 +8,13 @@ from fastapi import HTTPException, status
 from handlers.exceptions import exception_catcher
 from middlewares.logging.logger import logger
 from modules.token.schemas.requests import TokenRequest
-from modules.user.schemas.requests.user import CreateUserRequest, VerifyTokenRequest
+from modules.user.schemas.requests.user import CreateUserRequest, UserDefaultRequest, UserDefaultsRequest, VerifyTokenRequest
 from modules.user.services.role import RoleServices
-from shared.data.models import User
+from shared.data.models import User, UserDefaultModule
+from shared.data.repositories.module_repository import ModuleRepository
+from shared.data.repositories.user_default_repository import UserDefaultRepository
 from shared.data.repositories.user_repository import UserRepository
-from shared.data.schemas.domain import UserDomain
+from shared.data.schemas.domain import UserDefaultModuleDomain, UserDomain
 from shared.data.schemas.exceptions import RecordAlreadyExistsException, RecordNotFoundException
 from sqlalchemy.orm import Session
 
@@ -30,13 +33,15 @@ class UserServices:
                 if user is None:
                     raise RecordNotFoundException("User", request.username)
     
-    
                 # verify password
                 if not verify_password(request.password, user.password):
                     raise HTTPException(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        status_code=status.HTTP_409_CONFLICT,
                         detail="User credentials did not match."
                     )
+
+                if not user.verified:
+                    raise HTTPException(status_code=status.HTTP_424_FAILED_DEPENDENCY, detail=f"User {request.username} is not verified.")
                 if not user.is_active:
                     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"User {request.username} is not active.")
                 
@@ -102,6 +107,65 @@ class UserServices:
             return user if user else None
         except Exception as e:
             logger.error(f"Service: Error verifying user: {e}")
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    def user_defaults(db: Session, user_id: uuid.UUID) -> UserDefaultModuleDomain:
+        try:
+            defaults = UserDefaultRepository.filter(db, user_id=user_id)
+
+            return defaults
+        except Exception as e:
+            logger.error(f"Service: Error fetching user defaults: {e}")
+
+    def update_defaults(db: Session, request: UserDefaultsRequest, user_id: uuid.UUID) -> list[UserDefaultModuleDomain]:
+
+        try:
+            with db.begin():
+
+                # fetch current user defaults
+                existing_defaults = UserDefaultRepository.filter(db, user_id=user_id)
+
+                existing_defaults_entity_ids = [ed.entity_id for ed in existing_defaults]
+                
+                news = []
+                for default in request.defaults:
+                    entity_id = default.entity_id
+                    module_name = default.module_name
+
+                    # check if the module name exists
+                    module = ModuleRepository.get(db, name=module_name)
+
+                    if not module:
+                        continue
+                
+                    # check if the entity id exists
+                    if entity_id in existing_defaults_entity_ids:
+                        continue
+
+                    # create new user default module
+                    new_data = UserDefaultModuleDomain(
+                        user_id=user_id,
+                        entity_id=entity_id,
+                        module_id=module.id,
+                        created_by_id=user_id,
+                        updated_by_id=user_id,
+                        updated_at=datetime.now(timezone.utc)
+                    )
+
+                    news.append(new_data)
+                
+                UserDefaultRepository.bulk_create(db, data=news)
+
+                # refetch defaults
+                existing_defaults = UserDefaultRepository.filter(db, user_id=user_id)
+
+                return existing_defaults 
+                    
+        except Exception as e:
+            logger.error(f"Service: Error setting defaults: {e}")
             db.rollback()
             raise
         finally:

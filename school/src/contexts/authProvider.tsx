@@ -1,6 +1,8 @@
 
-import { createContext, useCallback, useContext, useEffect } from "react"
+import { API_BASE_URL, API_ENDPOINTS } from "@/api/api.endpoints";
+import { createContext, useCallback, useContext, useEffect, useState } from "react"
 import { toast } from "sonner";
+import { jwtDecode } from 'jwt-decode';
 
 type AuthProviderProps = {
     children: React.ReactNode
@@ -11,8 +13,13 @@ type AuthProviderState = {
         path: string,
         options?: RequestOptions,
     ) => Promise<T>;
-    getAccessToken: () => Promise<void>;
+    noAuthFetchInstance: <T = unknown>(
+        path: string,
+        options?: RequestOptions,
+    ) => Promise<T>;
+    getAccessToken: () => Promise<string>;
     redirectTo: string;
+    user: {[key: string]: any} | null
 
 }
 
@@ -20,10 +27,8 @@ type RequestOptions = Omit<RequestInit, "body"> & {
     body?: unknown;
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
-
 const ACCESS_TOKEN_KEY = "aluta_sess"
-const NO_AUTH_ROUTES: string[] = [
+export const NO_AUTH_ROUTES: string[] = [
     "/",
     "/register",
     "/forgot-password",
@@ -41,6 +46,7 @@ export function AuthProvider({
     const isPublicRoute = NO_AUTH_ROUTES.includes(
         currentRoutePath,
     );
+    const [user, setUser] = useState<{[key: string]: any} | null>(null)
 
     const redirectTo = isPublicRoute
         ? currentRoutePath
@@ -49,33 +55,47 @@ export function AuthProvider({
             window.location.search,
         )}`;
 
-    const getAccessToken = useCallback(async (): Promise<void> => {
-        return fetch(`${API_BASE_URL}/token/refresh`, {
+    const updateUser = (token: string | null) => {
+        if(!token) {
+            setUser(null)
+            return
+        }
+        const decoded = jwtDecode(token) as {[key: string]: any}
+
+        setUser(decoded)
+    }
+
+    const getAccessToken = useCallback(async (): Promise<string> => {
+
+        return fetch(`${API_BASE_URL}${API_ENDPOINTS.ACCESS_TOKEN}`, {
             method: "POST",
             credentials: "include"
-        }).then(async(res) => {
-            if (res.ok){
-                return await res.json()  
-            } 
-        })
-        .then((data) => {
-            localStorage.setItem(ACCESS_TOKEN_KEY, data.access_token)
-            return data.access_token
-        }).catch((e) => {
-            console.error(e)
-            localStorage.removeItem(ACCESS_TOKEN_KEY)
+        }).then(async (res) => {
+            if (res.ok) {
+                const data = await res.json()
+                localStorage.setItem(ACCESS_TOKEN_KEY, data.access_token)
+                    
+                    return data.access_token
+
+            }
             return ""
         })
+            .catch((e) => {
+                console.error(e)
+                localStorage.removeItem(ACCESS_TOKEN_KEY)
+                return ""
+            })
     }, []);
+
 
     useEffect(() => {
         if (!accessToken && !isPublicRoute) {
+            updateUser(null)
             // try getting an access token from an existing refresh token
-            const at = getAccessToken()
-            if(!at){
-                window.location.replace(redirectTo);
-            }
+           window.location.replace(redirectTo);
             
+        } else {
+            updateUser(accessToken)
         }
     }, [accessToken, isPublicRoute, redirectTo]);
 
@@ -94,32 +114,65 @@ export function AuthProvider({
                     headers: {
                         Authorization: `Bearer ${token}`,
                         Accept: "application/json",
-                        ...(body !== undefined
-                            ? { "Content-Type": "application/json" }
-                            : {}),
+                        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
                         ...headers,
                     },
-                    ...(body !== undefined
-                        ? { body: JSON.stringify(body) }
-                        : {}),
+                    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
                 },
             );
 
             if (!response.ok) {
                 const message = await response.text();
 
-                if(response.status === 401) {
+                if (response.status === 401) {
                     toast.error("No valid session found. Redirecting to login")
-                    window.location.href = redirectTo
+                    // window.location.href = redirectTo
                 }
                 throw new Error(
                     message || `Request failed (${response.status})`,
                 );
             }
 
-            if (response.status === 204) {
-                return undefined as T;
+            // if (response.status === 204) {
+            //     return undefined as T;
+            // }
+
+            return response.json() as Promise<T>;
+        },
+        [],
+    );
+
+    const noAuthFetchInstance = useCallback(
+        async <T = unknown,>(
+            path: string,
+            options: RequestOptions = {},
+        ): Promise<T> => {
+            const { body, headers, ...init } = options;
+            const response = await fetch(
+                `${API_BASE_URL}${path}`,
+                {
+                    ...init,
+                    credentials: "include",
+                    headers: {
+                        Accept: "application/json",
+                        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+                        ...headers,
+                    },
+                    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+                },
+            );
+
+            if (!response.ok) {
+                const message = await response.text();
+
+                throw new Error(
+                    message || `Request failed (${response.status})`,
+                );
             }
+
+            // if (response.status === 204) {
+            //     return undefined as T;
+            // }
 
             return response.json() as Promise<T>;
         },
@@ -130,8 +183,10 @@ export function AuthProvider({
         <AuthContext.Provider
             value={{
                 fetchInstance,
+                noAuthFetchInstance,
                 getAccessToken,
                 redirectTo,
+                user,
             }}
         >
             {children}

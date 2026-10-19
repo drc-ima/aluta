@@ -173,3 +173,20 @@ class SchoolServices:
             raise
         finally:
             db.close()
+
+    def user_schools_campuses(self, db: Session, user_id: uuid.UUID) -> list[dict]:
+        try:
+            staffs: list[StaffDomain] = StaffRepository.get_user_staffs(db, user_id)
+
+            staff_ids = [staff.id for staff in staffs]
+
+            schools = SchoolRepository.get_staff_schools_with_campuses(db, staff_ids)
+
+            return schools
+
+        except Exception as e:
+            logger.error(f"Service: Error fetching school: {e}")
+            db.rollback()
+            raise
+        finally:
+            db.close()

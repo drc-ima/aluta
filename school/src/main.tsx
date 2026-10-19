@@ -1,4 +1,4 @@
-import { StrictMode, Suspense } from 'react'
+import { Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import App from './App.tsx'
@@ -13,6 +13,7 @@ import { AuthProvider } from './contexts/authProvider.tsx'
 import "./assets/main.css"
 import { queryClient } from "./libs/queryClient";
 import { Toaster } from './components/ui/sonner';
+import { UserDefaultsProvider } from './contexts/userDefaultProvider.tsx';
 
 
 createRoot(document.getElementById('root')!).render(
@@ -20,7 +21,9 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <App />
+          <UserDefaultsProvider>
+            <App />
+          </UserDefaultsProvider>
         </AuthProvider>
         <Toaster />
       </ThemeProvider>

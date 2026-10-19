@@ -7,16 +7,14 @@ import {
 import { useAuth } from "@/contexts/authProvider";
 
 import {
-    loginApi
+    loginApi,
+    type LoginPayload
 } from "./api"
 
 export function useLogin() {
-    const { fetchInstance } = useAuth();
+    const { noAuthFetchInstance } = useAuth();
 
     return useMutation({
-        mutationFn: (payload: {
-            username: string;
-            password: string
-        }) => loginApi(fetchInstance, payload)
+        mutationFn: (payload: LoginPayload | any) => loginApi(noAuthFetchInstance, payload)
     })
 }

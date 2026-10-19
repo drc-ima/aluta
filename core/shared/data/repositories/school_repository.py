@@ -1,5 +1,6 @@
 import uuid
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from modules.school.schemas.requests.school import CreateCampusRequest, RegisterSchoolRequest, SchoolSerializer
@@ -147,3 +148,21 @@ class SchoolRepository:
         )
 
         return [school.to_pydantic() for school in schools]
+
+    def get_staff_schools_with_campuses(db: Session, staff_ids: list[dict]):
+
+        statement = (
+            select(
+                School.id.label("school_id"),
+                Campus.id.label("campus_id"),
+                School.name.label("school_name"),
+                Campus.name.label("campus_name")
+            )
+            .join(Campus, Campus.school_id == School.id)
+            .join(Staff, Staff.school_id == School.id)
+            .filter(Staff.id.in_(staff_ids), School.active == True)
+        )
+
+        schools = db.execute(statement=statement).mappings().all()
+
+        return schools

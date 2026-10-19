@@ -38,3 +38,12 @@ class VerifyTokenRequest(BaseRequest):
 
 class VerifyTokenResponse(BaseRequest):
     message: str
+
+
+class UserDefaultRequest(BaseRequest):
+    entity_id: uuid.UUID
+    module_name: str
+
+
+class UserDefaultsRequest(BaseRequest):
+    defaults: list[UserDefaultRequest] = []

@@ -34,6 +34,7 @@
     "@tanstack/react-query-devtools": "^5.104.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "jwt-decode": "^4.0.0",
     "lucide-react": "^1.57.0",
     "moment": "^2.31.0",
     "quill": "^2.0.3",

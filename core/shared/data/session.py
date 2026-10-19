@@ -1,7 +1,7 @@
 import uuid
 
 from dotenv import load_dotenv
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy.orm import declarative_base, sessionmaker
 from clients.db import postgres_engine
 from middlewares.context.request import get_refresh_token, get_user_id_email
@@ -41,7 +41,7 @@ def get_refreshtoken() -> str:
     try:
         refresh_token = get_refresh_token()
         if not refresh_token:
-            raise HTTPException(status_code=401, detail="User is not authenticated")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User is not authenticated")
         return refresh_token
     except Exception as e:
         logger.error(f"Session: Error fetching user {e}")

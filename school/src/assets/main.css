@@ -92,3 +92,15 @@
     height: 0;
   }
 }
+
+.has-data-[variant=inset]:bg-sidebar:has([data-variant=inset]) {
+    background-color: var(--sidebar);
+}
+
+.text-sidebar-foreground, .text-sidebar-foreground\/70 {
+    color: #020618;
+}
+
+.w-(--sidebar-width) {
+    width: var(--sidebar-width);
+}

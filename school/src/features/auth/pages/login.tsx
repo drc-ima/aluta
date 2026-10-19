@@ -2,8 +2,8 @@ import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/passwordInput'
-import { useAuth } from '@/contexts/authProvider'
-import { cn } from '@/libs/utils.ts'
+import { NO_AUTH_ROUTES, useAuth } from '@/contexts/authProvider'
+
 import { Loader2, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
 import { useForm } from 'react-hook-form'
@@ -11,10 +11,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useLogin } from '../hooks'
 import { z } from "zod";
 import { zodResolver } from '@hookform/resolvers/zod'
+import type { LoginPayload } from '../api'
 
 
 const formSchema = z.object({
-    email: z.email({
+    username: z.email({
         error: (iss) => (iss.input === '' ? 'Please enter your email.' : undefined),
     }),
     password: z
@@ -32,142 +33,119 @@ export default function Login() {
     const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            email: '',
+            username: '',
             password: '',
         },
     })
 
-    const onSubmit = async (data: { email: string; password: string }) => {
-
-
-        loginMutation.mutate({
-            username: data.email,
-            password: data.password
-        }, {
+    const onSubmit = async (
+        data: LoginPayload | { username: string, password: string },
+    ) => {
+        
+        console.log(redirectTo)
+        loginMutation.mutate(data, {
             onError: (error) => {
                 console.log(error.message)
                 toast.error(JSON.parse(error.message).detail)
             },
             onSuccess: (deta) => {
-                
-                toast.success(`Welcome back ${data.email}!`)
+                toast.success(`Welcome back ${data.username}!`)
                 localStorage.setItem("aluta_sess", deta.access_token)
-                navigate(redirectTo !== "/" ? redirectTo : "/school-selector")
+                navigate(NO_AUTH_ROUTES.includes(redirectTo) ? "/school-selector" : redirectTo)
                 
-
+                
             },
 
         })
 
     }
     return (
-        <div className='relative container grid h-svh flex-col items-center justify-center lg:max-w-none lg:grid-cols-2 lg:px-0'>
-            <div className='lg:p-8'>
-                <div className='mx-auto flex w-full flex-col justify-center space-y-2 py-8 sm:w-120 sm:p-8'>
-                    <div className='mb-4 flex items-center justify-center gap-1'>
-                        <img src="/favicon-32x32.png" />
-                        <h1 className='text-2xl font-medium font-bold!'>Aluta Schools</h1>
-                    </div>
-                </div>
-                <div className='mx-auto flex w-full max-w-sm flex-col justify-center gap-[1rem]'>
-                    <div className='flex flex-col gap-[1rem] text-start'>
-                        <h2 className='text-lg! font-semibold! tracking-tight'>Sign in</h2>
-                        <p className='text-sm! text-muted-foreground'>
-                            Enter your email and password below to log into{' '}
-                            <br className='max-sm:hidden' /> your school account.If your should is not registered yet {' '}
-                            <Link
-                                to='/register'
-                                className='text-nowrap underline underline-offset-4 hover:text-primary'
-                            >
-                                Register
-                            </Link>
-                        </p>
-                    </div>
-                    <Form {...form}>
-                        <form
-                            className='flex flex-col gap-[1rem]'
-                            onSubmit={form.handleSubmit(onSubmit)}
-
-                        >
-                            <FormField
-                                control={form.control}
-                                name='email'
-                                render={({ field }) => (
-                                    <FormItem className='mt-[1rem]'>
-                                        <FormLabel>Email</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder='username@school.com' {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name='password'
-                                render={({ field }) => (
-                                    <FormItem className='relative'>
-                                        <FormLabel>Password</FormLabel>
-                                        <FormControl>
-                                            <PasswordInput placeholder='********' {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                        <Link
-                                            to='/forgot-password'
-                                            className='absolute inset-e-0 -top-0.5 text-sm font-medium text-muted-foreground hover:opacity-75'
-                                        >
-                                            Forgot password?
-                                        </Link>
-                                    </FormItem>
-                                )}
-                            />
-                            <Button className='mt-2' disabled={loginMutation.isPending}>
-                                {loginMutation.isPending ? <Loader2 className='animate-spin' /> : <LogIn />}
-                                Sign in
-                            </Button>
-                        </form>
-
-                    </Form>
-
-                    <p className='px-8 text-center text-sm text-muted-foreground'>
-                        By clicking sign in, you agree to our{' '}
-                        <a
-                            href='/terms'
-                            className='underline underline-offset-4 hover:text-primary'
-                        >
-                            Terms of Service
-                        </a>{' '}
-                        and{' '}
-                        <a
-                            href='/privacy'
-                            className='underline underline-offset-4 hover:text-primary'
-                        >
-                            Privacy Policy
-                        </a>
-                        .
-                    </p>
+        <div className='w-full h-full flex flex-col gap-[1rem] justify-center'>
+            <div className='mx-auto flex w-full flex-col justify-center space-y-2 py-8 sm:w-120 sm:p-8'>
+                <div className='mb-4 flex items-center justify-center gap-1'>
+                    <img src="/favicon-32x32.png" />
+                    <h1 className='text-2xl font-medium font-bold!'>Aluta Schools</h1>
                 </div>
             </div>
+            <div className='flex flex-col gap-[1rem] text-start'>
+                <h2 className='text-lg! font-semibold! tracking-tight'>Sign in</h2>
+                <p className='text-sm! text-muted-foreground'>
+                    Enter your email and password below to log into{' '}
+                    <br className='max-sm:hidden' /> your school account.If your should is not registered yet {' '}
+                    <Link
+                        to='/register'
+                        className='text-nowrap underline underline-offset-4 hover:text-primary'
+                    >
+                        Register
+                    </Link>
+                </p>
+            </div>
+            <Form 
+                {...form}
 
-            <div
-                className={cn(
-                    'relative h-full overflow-hidden bg-muted max-lg:hidden',
-                    '[&>img]:absolute  [&>img]:h-full [&>img]:w-full [&>img]:object-cover [&>img]:object-top-left [&>img]:select-none'
-                )}
             >
-                <img
-                    src={"/auth_banner.jpg"}
+                <form
+                    
+                    className='flex flex-col gap-[1rem]'
+                    onSubmit={form.handleSubmit(onSubmit)}
 
-                    alt='Students Banners'
-                />
-                {/* <img
-          src={dashboardDark}
-          className='hidden dark:block'
-          width={1024}
-          height={1138}
-          alt='Shadcn-Admin'
-        /> */}
-            </div>
+                >
+                    <FormField
+                        control={form.control}
+                        name='username'
+                        render={({ field }) => (
+                            <FormItem className='mt-[1rem]'>
+                                <FormLabel>Email</FormLabel>
+                                <FormControl>
+                                    <Input placeholder='username@school.com' {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name='password'
+                        render={({ field }) => (
+                            <FormItem className='relative'>
+                                <FormLabel>Password</FormLabel>
+                                <FormControl>
+                                    <PasswordInput placeholder='********' {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                <Link
+                                    to='/forgot-password'
+                                    className='absolute inset-e-0 -top-0.5 text-sm font-medium text-muted-foreground hover:opacity-75'
+                                >
+                                    Forgot password?
+                                </Link>
+                            </FormItem>
+                        )}
+                    />
+                    <Button type="submit" className='mt-2' disabled={loginMutation.isPending}>
+                        {loginMutation.isPending ? <Loader2 className='animate-spin' /> : <LogIn />}
+                        Sign in
+                    </Button>
+                </form>
+
+            </Form>
+            <p className='px-8 text-center text-sm text-muted-foreground'>
+                By clicking sign in, you agree to our{' '}
+                <a
+                    href='/terms'
+                    className='underline underline-offset-4 hover:text-primary'
+                >
+                    Terms of Service
+                </a>{' '}
+                and{' '}
+                <a
+                    href='/privacy'
+                    className='underline underline-offset-4 hover:text-primary'
+                >
+                    Privacy Policy
+                </a>
+                .
+            </p>
         </div>
     )
 }

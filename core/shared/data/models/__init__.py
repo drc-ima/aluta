@@ -21,7 +21,7 @@ from shared.data.schemas.domain import (
     StaffDepartmentDomain,
     StaffDomain,
     StaffPositionDomain,
-    UserModuleDefaultDomain,
+    UserDefaultModuleDomain,
     UserPermissionDomain,
     UserRoleDomain,
     UserType,
@@ -76,7 +76,6 @@ class AuditMixin:
     def updated_by(cls) -> Mapped["User"]: 
         return relationship("User", foreign_keys=f"[{cls.__name__}.updated_by_id]")
 
-
 class User(AuditMixin, Base):
     __tablename__ = "user"
     first_name: Mapped[str] = mapped_column(String, nullable=False)
@@ -98,6 +97,7 @@ class User(AuditMixin, Base):
         foreign_keys="[UserRole.user_id]"
     )
     staffs: Mapped[list["Staff"]] = relationship(back_populates="user", foreign_keys="[Staff.user_id]")
+    defaults: Mapped[list["UserDefaultModule"]] = relationship(back_populates="user", foreign_keys="[UserDefaultModule.user_id]")
 
     def set_password(self, raw_password: str) -> None:
         self.password = pwd_context.hash(raw_password)
@@ -107,6 +107,10 @@ class User(AuditMixin, Base):
         if not self.password:
             return False
         return pwd_context.verify(raw_password, self.password)
+
+    @property
+    def full_name(self) -> str:
+        return f"{self.first_name}{" "+ self.middle_name if self.middle_name else ""}{" " + self.last_name}"
     
     def to_pydantic(self):
         return UserDomain.model_validate(self)
@@ -231,6 +235,7 @@ class School(AuditMixin, Base):
     positions: Mapped[list["Position"]] = relationship(back_populates="school", foreign_keys="[Position.school_id]")
     departments: Mapped[list["Department"]] = relationship(back_populates="school", foreign_keys="[Department.school_id]")
     modules: Mapped[list["SchoolModule"]] = relationship(back_populates="school", foreign_keys="[SchoolModule.school_id]")
+    campuses: Mapped[list["Campus"]] = relationship(back_populates="school", foreign_keys="[Campus.school_id]")
     def to_pydantic(self):
         return SchoolDomain.model_validate(self)
 
@@ -247,7 +252,7 @@ class Campus(AuditMixin, Base):
     academic_periods: Mapped[list["AcademicPeriod"]] = relationship(back_populates="campus", foreign_keys="[AcademicPeriod.campus_id]")
     contacts: Mapped[list["CampusContact"]] = relationship(back_populates="campus", foreign_keys="[CampusContact.campus_id]")
     staffs: Mapped[list["StaffCampus"]] = relationship(back_populates="campus", foreign_keys="[StaffCampus.campus_id]")
-
+    school: Mapped[School] = relationship(back_populates="campuses", foreign_keys="[Campus.school_id]")
     def to_pydantic(self):
         return CampusDomain.model_validate(self)
 
@@ -392,6 +397,8 @@ class Module(AuditMixin, Base):
 
     school_modules: Mapped[list["SchoolModule"]] = relationship(back_populates="module", foreign_keys="[SchoolModule.module_id]")
     permissions: Mapped[list[Permission]] = relationship(back_populates="module", foreign_keys="[Permission.module_id]")
+    user_default_modules: Mapped[list["UserDefaultModule"]] = relationship(back_populates="module", foreign_keys="[UserDefaultModule.module_id]")
+    
     def to_pydantic(self):
         return ModuleDomain.model_validate(self)
 
@@ -434,14 +441,18 @@ class AcademicPeriod(AuditMixin, Base):
     def to_pydantic(self):
         return AcademicPeriodDomain.model_validate(self)
 
-class UserModuleDefault(AuditMixin, Base):
-    __tablename__ = "user_module_default"
+class UserDefaultModule(AuditMixin, Base):
+    __tablename__ = "user_default_module"
 
     entity_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
     module_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("module.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("user.id", ondelete="CASCADE"))
 
+    user: Mapped[User] = relationship(back_populates="defaults", foreign_keys="[UserDefaultModule.user_id]")
+    module: Mapped[Module] = relationship(back_populates="user_default_modules", foreign_keys="[UserDefaultModule.module_id]")
+    
     def to_pydantic(self):
-        return UserModuleDefaultDomain.model_validate(self)
+        return UserDefaultModuleDomain.model_validate(self)
 
 class Photo(AuditMixin, Base):
     __tablename__ = "photo"

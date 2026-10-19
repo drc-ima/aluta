@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 from fastapi import APIRouter, Depends, HTTPException
 
 from middlewares.logging.logger import logger
-from modules.school.schemas.requests.school import RegisterSchoolRequest
+from modules.school.schemas.requests.school import RegisterSchoolRequest, SchoolAddressRequest
 from modules.school.schemas.responses import SchoolResponse
 from modules.school.services.school import SchoolServices
 from modules.user.schemas.requests.user import VerifyTokenRequest, VerifyTokenResponse
@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from shared.contents.emails import EMAIL_BODIES
 from shared.services.email import email_sender
+from shared.services.gps_address import get_location
 from shared.utils.token import TokenTypes, token
 
 
@@ -143,6 +144,29 @@ def verify_school(
     except RecordNotFoundException as e:
         logger.error(f"Router: School not found - {e.detail}")
         raise e
+    except HTTPException as e:
+        logger.error(f"Router: HTTP error verifying school - {e.detail}")
+        raise e
+    except Exception as e:
+        logger.error(f"Router: Unexpected error verifying school - {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed  verifying school: {str(e)}"
+        )
+
+
+@router.post(
+    "/address"
+)
+async def school_address(
+    request: SchoolAddressRequest
+):
+    try:
+        address = await get_location(request.gps_code)
+
+        return address
+    except RecordNotFoundException as e:
+            logger.error(f"Router: School not found - {e.detail}")
+            raise e
     except HTTPException as e:
         logger.error(f"Router: HTTP error verifying school - {e.detail}")
         raise e

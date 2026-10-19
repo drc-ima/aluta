@@ -74,6 +74,7 @@ class UserDomain(AuditSchemaMixin, BaseModel):
     middle_name: Optional[str] = None
     last_name: str
     user_type: UserType
+    verified: bool
     is_active: bool = False
     email: Optional[str] = None
     phone: Optional[str] = None
@@ -84,6 +85,7 @@ class UserDomain(AuditSchemaMixin, BaseModel):
         default_factory=list
     )
     staffs: list["StaffDomain"] = Field(default_factory=list)
+    defaults: list["UserDefaultModuleDomain"] = Field(default_factory=list)
 
     def full_name(self):
         return f"{self.first_name}{' ' + self.middle_name + ' ' if self.middle_name else ' '}{self.last_name}"
@@ -153,6 +155,7 @@ class SchoolDomain(AuditSchemaMixin, BaseModel):
     staffs: list["StaffDomain"] = Field(default_factory=list)
     departments: list["DepartmentDomain"] = Field(default_factory=list)
     modules: list["SchoolModuleDomain"] = Field(default_factory=list)
+    campuses: list["CampusDomain"] = Field(default_factory=list)
 
 
 class CampusDomain(AuditSchemaMixin, BaseModel):
@@ -294,12 +297,14 @@ class AcademicPeriodDomain(AuditSchemaMixin, BaseModel):
     parent: Optional["AcademicPeriodDomain"] = None
     # children: list["AcademicPeriodDomain"] = Field(default_factory=list)
 
-class UserModuleDefaultDomain(AuditSchemaMixin, BaseModel):
+class UserDefaultModuleDomain(AuditSchemaMixin, BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     entity_id: uuid.UUID
     module_id: uuid.UUID
+    user_id: uuid.UUID
 
+    module: Optional[ModuleDomain] = None
 
 class PhotoDomain(AuditSchemaMixin, BaseModel):
     entity_id: uuid.UUID

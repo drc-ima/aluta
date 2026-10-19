@@ -7,10 +7,12 @@ from sqlalchemy.orm import Session
 
 from middlewares.context.request import get_user_id_email
 from shared.data.models import Module, SchoolModule
+from shared.data.repositories.repository import BaseRepository
 from shared.data.schemas.domain import ModuleDomain, SchoolModuleDomain
 
 
-class ModuleRepository:
+class ModuleRepository(BaseRepository[Module, ModuleDomain]):
+    model = Module
 
     def create_module(db: Session, data=ModuleDomain) -> ModuleDomain:
 

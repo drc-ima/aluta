@@ -39,6 +39,7 @@ class CreateCampusRequest(BaseRequest):
     name: str
     gps_code: str
     address: Optional[str]
+    addressStr: Optional[str]
     contacts: list[CreateCampusContactRequest]
 
 class RegisterSchoolRequest(BaseRequest):
@@ -51,3 +52,6 @@ class SchoolSerializer(CreateSchoolRequest):
     slug: str
     created_by_id: uuid.UUID
     domain: str
+
+class SchoolAddressRequest(BaseRequest):
+    gps_code: str

@@ -1,7 +1,13 @@
-import { useUserSchools } from "../hooks"
+import { Header } from "@/components/layout/header";
+import { AlutaSchoolTitle } from "@/components/layout/alutaSchooTitle";
+import { useUserDefaultsProvider } from "@/contexts/userDefaultProvider";
 
 export default function SchoolSelector() {
+    // const { loadingDefaults, loadingSchools} = useUserDefaultsProvider()
 
-    const schools = useUserSchools();
-    return <>{JSON.stringify(schools.data)}</>
+    return (
+        <div className=" container overflow-hidden h-full">
+            Select
+        </div>
+    )
 }
