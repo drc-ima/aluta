@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { cn } from '@/libs/utils'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from './sidebar'
+import { useUserDefaultsProvider } from '@/contexts/userDefaultProvider'
 // import { SidebarTrigger } from '@/components/ui/sidebar'
 
 type HeaderProps = React.HTMLAttributes<HTMLElement> & {
@@ -12,6 +13,7 @@ type HeaderProps = React.HTMLAttributes<HTMLElement> & {
 
 export function Header({ className, fixed, showSidebar, children, ...props }: HeaderProps) {
   const [offset, setOffset] = useState(0)
+  const { selectedCampus } = useUserDefaultsProvider()
 
   useEffect(() => {
     const onScroll = () => {
@@ -44,7 +46,7 @@ export function Header({ className, fixed, showSidebar, children, ...props }: He
         )}
       >
         {
-          !showSidebar && (
+          selectedCampus !== null && (
             <>
               <SidebarTrigger variant='outline' className='max-md:scale-125' />
               <Separator orientation='vertical' className='h-6' />

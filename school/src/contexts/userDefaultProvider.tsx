@@ -6,9 +6,10 @@ import type { SchoolCampusProps } from "@/features/school/api"
 import { useUpdateDefaults, useUserSchools, useUserSchoolsCampuses } from "@/features/school/hooks"
 import { useUserDefaults } from "@/hooks/queries"
 import { ArrowRightIcon, Loader2Icon, LoaderIcon } from "lucide-react"
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
+import { useAuth } from "./authProvider"
 
 export type DefaultsProps = {
     [key: string]: string
@@ -18,7 +19,9 @@ type UserDefaultsProviderState = {
     defaults: DefaultsProps | null | undefined,
     loadingSchools: boolean,
     loadingSettings: boolean,
-    schoolsCampuses: SchoolCampusProps[] | undefined
+    schoolsCampuses: SchoolCampusProps[] | undefined,
+    selectedCampus: any | null,
+    selectedSchool: any | null
 }
 const UserDefaultsContext = createContext<UserDefaultsProviderState | undefined>(undefined);
 
@@ -29,11 +32,10 @@ type UserDefaultsProviderProps = {
 export function UserDefaultsProvider({
     children
 }: UserDefaultsProviderProps) {
+    const { user } = useAuth()
+    const schools = useUserSchools({ enabled: user !== null })
 
-    const schools = useUserSchools({ enabled: true })
-
-    const schoolsCampuses = useUserSchoolsCampuses({ enabled: true })
-
+    const schoolsCampuses = useUserSchoolsCampuses({ enabled: user !== null })
 
     // const settings = async () => {
 
@@ -61,6 +63,22 @@ export function UserDefaultsProvider({
         data: defaults,
         mutate: mutateDefaults
     } = useUpdateDefaults()
+
+    const selectedSchool = useMemo(() => {
+        if (loadingSettings) return null;
+
+        return schools?.data?.find(
+            school => school.id === defaults?.["School"]
+        ) || null;
+    }, [defaults?.School, loadingSettings, schools.data]);
+
+    const selectedCampus = useMemo(() => {
+        if (!selectedSchool) return null;
+
+        return selectedSchool.campuses.find(
+            (campus: any) => campus.id === defaults?.["Campus"]
+        ) || null;
+    }, [selectedSchool, defaults?.Campus]);
 
     const fetchDefaults = async (defaultAsArg: DefaultModulePayload[] = []) => {
         let defaults: DefaultModulePayload[] = []
@@ -101,20 +119,25 @@ export function UserDefaultsProvider({
                 defaults,
                 loadingSchools: schools.isLoading,
                 loadingSettings,
-                schoolsCampuses: schoolsCampuses.data
+                schoolsCampuses: schoolsCampuses.data,
+                selectedSchool,
+                selectedCampus
             }}
         >
             {
-                schoolsCampuses.isLoading ?
-                    <div className=" flex h-svh w-full overflow-hidden">
-                        <div className="flex-grow-1 flex justify-center items-center">
-                            <LoaderIcon className="animate-spin w-[3rem] h-[3rem]" />
-                        </div>
-
-                    </div>
-                    : (
-                        defaults !== undefined && Object.keys(defaults).length === 0 ? <CampusSelector campuses={schoolsCampuses.data} /> : children
-                    )
+                user ? (
+                    schoolsCampuses.isLoading && !selectedSchool && !selectedCampus ?
+                        (
+                            <div className=" flex h-svh w-full overflow-hidden">
+                                <div className="flex-grow-1 flex justify-center items-center">
+                                    <LoaderIcon className="animate-spin w-[3rem] h-[3rem]" />
+                                </div>
+                            </div>
+                        )
+                        : (
+                            defaults !== undefined && Object.keys(defaults).length === 0 ? <CampusSelector campuses={schoolsCampuses.data} /> : children
+                        )
+                ) : children
 
             }
 
@@ -125,7 +148,9 @@ export function UserDefaultsProvider({
 export const useUserDefaultsProvider = () => {
     const context = useContext(UserDefaultsContext)
     if (!context) throw new Error("useUserDefaults must be used within a UserDefaultsProvider")
+    return context;
 }
+
 
 const CampusSelector: React.FC<{
     campuses: SchoolCampusProps[] | undefined;
@@ -134,7 +159,7 @@ const CampusSelector: React.FC<{
 
     const updateDefaultsMutation = useUpdateDefaults();
 
-    const fetchDefaults = async (defaults= []) => {
+    const fetchDefaults = async (defaults = []) => {
 
         updateDefaultsMutation.mutateAsync({
             defaults: defaults
@@ -165,7 +190,7 @@ const CampusSelector: React.FC<{
                                                 type="button"
                                                 onClick={async () => {
                                                     const defaults: any = [
-                                                        {                                                           
+                                                        {
                                                             entity_id: campus.school_id,
                                                             module_name: "School",
                                                         },
@@ -174,7 +199,7 @@ const CampusSelector: React.FC<{
                                                             module_name: "Campus",
                                                         }
                                                     ]
-                                                    
+
                                                     await fetchDefaults(defaults)
                                                 }}
                                                 disabled={updateDefaultsMutation.isPending} variant={"secondary"}>

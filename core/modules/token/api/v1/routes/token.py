@@ -176,3 +176,16 @@ def generate_access_token(db: Session = Depends(get_db), refresh_token: str = De
     except Exception as e:
         logger.error(f"Router: Unexpected error logging in - {e}")
         raise HTTPException(status_code=500, detail=f"Failed to login: {str(e)}")
+
+
+@router.post("/logout", response_class=JSONResponse, status_code=200)
+def logout(
+    user: dict = Depends(get_user),
+    refresh_token: str = Depends(get_refreshtoken)
+):  
+    content = {"message": "Logout successful"}
+    response = JSONResponse(content=content)
+
+    response.delete_cookie("_aluta_sess")
+
+    return response

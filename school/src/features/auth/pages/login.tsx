@@ -7,7 +7,7 @@ import { NO_AUTH_ROUTES, useAuth } from '@/contexts/authProvider'
 import { Loader2, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
 import { useForm } from 'react-hook-form'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useLogin } from '../hooks'
 import { z } from "zod";
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -25,7 +25,6 @@ const formSchema = z.object({
 })
 export default function Login() {
 
-    const navigate = useNavigate();
     const { redirectTo } = useAuth();
 
     const loginMutation = useLogin();
@@ -42,20 +41,17 @@ export default function Login() {
         data: LoginPayload | { username: string, password: string },
     ) => {
         
-        console.log(redirectTo)
         loginMutation.mutate(data, {
             onError: (error) => {
-                console.log(error.message)
+                console.log(error)
                 toast.error(JSON.parse(error.message).detail)
             },
             onSuccess: (deta) => {
                 toast.success(`Welcome back ${data.username}!`)
                 localStorage.setItem("aluta_sess", deta.access_token)
-                navigate(NO_AUTH_ROUTES.includes(redirectTo) ? "/school-selector" : redirectTo)
-                
-                
+                console.log(NO_AUTH_ROUTES.includes(redirectTo), redirectTo)
+                window.location.replace("/dashboard")
             },
-
         })
 
     }

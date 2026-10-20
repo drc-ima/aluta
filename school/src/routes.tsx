@@ -1,8 +1,9 @@
 import { createBrowserRouter } from "react-router-dom";
 import { LoginPage, RegisterPage } from "./features/auth/pages";
-import { Dashboard, SchoolSelector } from "./features/school/pages";
+import { Dashboard } from "./features/school/pages";
 import { AuthLayoutComponent } from "./features/auth/components";
 import { Layout } from "./components/layout/layout";
+import { UserDefaultsProvider } from "./contexts/userDefaultProvider";
 
 
 const router = createBrowserRouter([
@@ -21,7 +22,7 @@ const router = createBrowserRouter([
         ]
     },
     {
-        element: <Layout />,
+        element: <UserDefaultsProvider><Layout /></UserDefaultsProvider>,
         children: [
             {
                 path: "/dashboard",

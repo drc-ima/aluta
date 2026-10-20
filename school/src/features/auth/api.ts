@@ -13,16 +13,27 @@ export type LoginPayload = {
 } & BodyInit
 
 export function loginApi(
-    fetchInstance: FetchInstance,
-    payload: LoginPayload | any
+  fetchInstance: FetchInstance,
+  payload: LoginPayload | any
 ) {
-    return fetchInstance<LoginResponse>(
-        API_ENDPOINTS.TOKEN_LOGIN,
-        {
-            method: "POST",
-            body: payload
-        }
-    )
+  return fetchInstance<LoginResponse>(
+    API_ENDPOINTS.TOKEN_LOGIN,
+    {
+      method: "POST",
+      body: payload
+    }
+  )
+}
+
+export function LogoutApi(
+  fetchInstance: FetchInstance
+) {
+  return fetchInstance(
+    API_ENDPOINTS.TOKEN_LOGOUT,
+    {
+      method: "POST"
+    }
+  )
 }
 
 export type RegisterPayload = {
@@ -34,7 +45,7 @@ export type RegisterPayload = {
   campus: {
     name: string;
     gps_code: string;
-    address: {[key: string]: any} | null;
+    address: { [key: string]: any } | null;
     addressStr: string,
     contacts: {
       contact_type: "Email" | "Phone" | string;

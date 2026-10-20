@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import useDialogState from '@/hooks/useDialogState'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -13,12 +13,34 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdownMenu'
 import { useAuth } from '@/contexts/authProvider'
+import { useUserDefaultsProvider } from '@/contexts/userDefaultProvider'
+import { useLogout } from '@/features/auth/hooks'
 // import { SignOutDialog } from '@/components/sign-out-dialog'
 
 
 export function ProfileDropdown() {
   const { user } = useAuth()
-  const [open, setOpen] = useDialogState()
+  // const [open, setOpen] = useDialogState()
+  const { selectedSchool } = useUserDefaultsProvider();
+  const navigate = useNavigate();
+
+  const {
+    isPending: loadingLogout,
+    mutateAsync: logoutMutate
+  } = useLogout()
+
+  const handleLogout = async() => {
+
+    await logoutMutate(
+      undefined,
+      {
+        onSuccess() {
+          localStorage.removeItem("aluta_sess")
+          navigate("/")
+        },
+      }
+    )
+  }
 
   return (
     <>
@@ -34,10 +56,17 @@ export function ProfileDropdown() {
         <DropdownMenuContent className='w-56' align='end' forceMount>
           <DropdownMenuLabel className='font-normal'>
             <div className='flex flex-col gap-1.5'>
-              <p className='text-sm leading-none font-medium'>satnaing</p>
+              <p className='text-sm leading-none font-medium'>{user?.first_name} {user?.last_name}</p>
               <p className='text-xs leading-none text-muted-foreground'>
                 {user?.upn}
               </p>
+              {
+                selectedSchool && (
+                  <p className='text-xs leading-none text-wrap text-muted-foreground'>
+                    {selectedSchool?.name}
+                  </p>
+                )
+              }
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -63,7 +92,9 @@ export function ProfileDropdown() {
             <DropdownMenuItem>New Team</DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem variant='destructive' onClick={() => setOpen(true)}>
+          <DropdownMenuItem variant='destructive' onClick={async() => {
+            await handleLogout()
+          }}>
             Sign out
             <DropdownMenuShortcut className='text-current'>
               ⇧⌘Q

@@ -4,6 +4,7 @@ export const API_ENDPOINTS = {
     // Auth
     TOKEN_LOGIN: "/token/login",
     ACCESS_TOKEN: "/token/refresh",
+    TOKEN_LOGOUT: "/token/logout",
 
     // School
     REGISTER_SCHOOL: "/school/register",

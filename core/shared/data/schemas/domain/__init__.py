@@ -273,6 +273,7 @@ class ModuleDomain(AuditSchemaMixin, BaseModel):
     description: Optional[str] = None
     icon: Optional[str] = None
     default: Optional[bool] = False
+    slug: Optional[str] = None
     permissions: list[PermissionDomain] = Field(default_factory=list)
 
 

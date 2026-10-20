@@ -394,6 +394,7 @@ class Module(AuditMixin, Base):
     description: Mapped[str] = mapped_column(String, nullable=True)
     icon: Mapped[str] = mapped_column(String(50), nullable=True)
     default: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    slug: Mapped[str] = mapped_column(String, nullable=True)
 
     school_modules: Mapped[list["SchoolModule"]] = relationship(back_populates="module", foreign_keys="[SchoolModule.module_id]")
     permissions: Mapped[list[Permission]] = relationship(back_populates="module", foreign_keys="[Permission.module_id]")

@@ -21,13 +21,16 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <UserDefaultsProvider>
+          
             <App />
-          </UserDefaultsProvider>
+          
         </AuthProvider>
-        <Toaster />
+        <Toaster duration={5000} />
       </ThemeProvider>
-      <ReactQueryDevtools initialIsOpen={false} />
+      {
+        import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />
+      }
+      
     </QueryClientProvider>
   </Suspense>,
 )
