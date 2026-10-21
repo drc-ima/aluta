@@ -13,7 +13,6 @@ import { AuthProvider } from './contexts/authProvider.tsx'
 import "./assets/main.css"
 import { queryClient } from "./libs/queryClient";
 import { Toaster } from './components/ui/sonner';
-import { UserDefaultsProvider } from './contexts/userDefaultProvider.tsx';
 
 
 createRoot(document.getElementById('root')!).render(
@@ -21,16 +20,14 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          
-            <App />
-          
+          <App />
         </AuthProvider>
         <Toaster duration={5000} />
       </ThemeProvider>
       {
         import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />
       }
-      
+
     </QueryClientProvider>
   </Suspense>,
 )

@@ -21,11 +21,10 @@ import { useLogout } from '@/features/auth/hooks'
 export function ProfileDropdown() {
   const { user } = useAuth()
   // const [open, setOpen] = useDialogState()
-  const { selectedSchool } = useUserDefaultsProvider();
+  const { selectedSchool, schoolRole } = useUserDefaultsProvider();
   const navigate = useNavigate();
 
   const {
-    isPending: loadingLogout,
     mutateAsync: logoutMutate
   } = useLogout()
 
@@ -57,13 +56,18 @@ export function ProfileDropdown() {
           <DropdownMenuLabel className='font-normal'>
             <div className='flex flex-col gap-1.5'>
               <p className='text-sm leading-none font-medium'>{user?.first_name} {user?.last_name}</p>
-              <p className='text-xs leading-none text-muted-foreground'>
-                {user?.upn}
-              </p>
+              
               {
                 selectedSchool && (
                   <p className='text-xs leading-none text-wrap text-muted-foreground'>
                     {selectedSchool?.name}
+                  </p>
+                )
+              }
+              {
+                schoolRole && (
+                  <p className='text-xs leading-none text-wrap text-muted-foreground'>
+                    {schoolRole?.name}
                   </p>
                 )
               }

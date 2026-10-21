@@ -50,7 +50,7 @@ export default function Login() {
                 toast.success(`Welcome back ${data.username}!`)
                 localStorage.setItem("aluta_sess", deta.access_token)
                 console.log(NO_AUTH_ROUTES.includes(redirectTo), redirectTo)
-                window.location.replace("/dashboard")
+                window.location.replace("/overview")
             },
         })
 

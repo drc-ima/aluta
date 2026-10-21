@@ -76,7 +76,7 @@ export default function Register() {
                 middle_name: "",
                 email: "sammy@gmail.com",
                 phone: "0201234567",
-                password: "password1"
+                password: "mypassword1"
             }
         }
     })

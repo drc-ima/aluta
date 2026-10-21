@@ -55,6 +55,7 @@ class SchoolServices:
                     user_type="SCHOOL",
                     username=request.creator.email.lower(),
                     is_active=False,
+                    verified=False,
                     created_at=datetime.now(timezone.utc),
                     updated_at=datetime.now(timezone.utc),
                 )
@@ -78,6 +79,7 @@ class SchoolServices:
                     created_by_id=user.id,
                     updated_by_id=user.id,
                     active=False,
+                    verified=False,
                     created_at=datetime.now(timezone.utc),
                     updated_at=datetime.now(timezone.utc)
                 )

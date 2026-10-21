@@ -21,7 +21,8 @@ type UserDefaultsProviderState = {
     loadingSettings: boolean,
     schoolsCampuses: SchoolCampusProps[] | undefined,
     selectedCampus: any | null,
-    selectedSchool: any | null
+    selectedSchool: any | null,
+    schoolRole: any | null;
 }
 const UserDefaultsContext = createContext<UserDefaultsProviderState | undefined>(undefined);
 
@@ -80,6 +81,12 @@ export function UserDefaultsProvider({
         ) || null;
     }, [selectedSchool, defaults?.Campus]);
 
+    const schoolRole = useMemo(() => {
+        if(!user) return null;
+        if (!selectedSchool) return null;
+        return user?.roles.find((role: any) => role.school_id === selectedSchool.id)
+    }, [selectedSchool, user])
+
     const fetchDefaults = async (defaultAsArg: DefaultModulePayload[] = []) => {
         let defaults: DefaultModulePayload[] = []
         if (defaultAsArg && defaultAsArg.length > 0) {
@@ -121,7 +128,8 @@ export function UserDefaultsProvider({
                 loadingSettings,
                 schoolsCampuses: schoolsCampuses.data,
                 selectedSchool,
-                selectedCampus
+                selectedCampus,
+                schoolRole
             }}
         >
             {
@@ -168,7 +176,7 @@ const CampusSelector: React.FC<{
                 toast.error("Error loading default settins")
             },
             onSuccess: () => {
-                window.location.replace("/dashboard")
+                window.location.replace("/overview")
             }
         })
     }
@@ -203,8 +211,8 @@ const CampusSelector: React.FC<{
                                                     await fetchDefaults(defaults)
                                                 }}
                                                 disabled={updateDefaultsMutation.isPending} variant={"secondary"}>
-                                                {updateDefaultsMutation.isPending ? <Loader2Icon className='animate-spin' /> : <ArrowRightIcon />}
                                                 Continue
+                                                {updateDefaultsMutation.isPending ? <Loader2Icon className='animate-spin' /> : <ArrowRightIcon />}
                                             </Button>
                                         </div>
                                     </div>

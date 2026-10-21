@@ -40,6 +40,7 @@ def normal_login(request: TokenRequest, db: Session = Depends(get_db)):
                 {
                     "id": str(role.id),
                     "name": role.role.name,
+                    "school_id": str(role.role.school_id) if role.role.school_id else None,
                     "permissions": [
                         perm.permission.code_name for perm in role.role.role_permissions
                     ],
@@ -72,6 +73,7 @@ def normal_login(request: TokenRequest, db: Session = Depends(get_db)):
                 {
                     "id": str(role.id),
                     "name": role.role.name,
+                    "school_id": str(role.role.school_id) if role.role.school_id else None,
                     "permissions": [
                         perm.permission.code_name for perm in role.role.role_permissions
                     ],
@@ -145,6 +147,7 @@ def generate_access_token(db: Session = Depends(get_db), refresh_token: str = De
                 {
                     "id": str(role.id),
                     "name": role.role.name,
+                    "school_id": str(role.role.school_id) if role.role.school_id else None,
                     "permissions": [
                         perm.permission.code_name for perm in role.role.role_permissions
                     ],

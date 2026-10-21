@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from modules.school.schemas.requests.school import CreateCampusRequest, RegisterSchoolRequest, SchoolSerializer
-from shared.data.models import Campus, CampusContact, School, Staff
+from shared.data.models import Campus, CampusContact, Photo, School, Staff
 from shared.data.schemas.domain import CampusDomain, SchoolDomain
 from shared.data.schemas.exceptions import RecordNotFoundException
 
@@ -151,12 +151,22 @@ class SchoolRepository:
 
     def get_staff_schools_with_campuses(db: Session, staff_ids: list[dict]):
 
+        latest_photo = (
+            select(Photo.blob_url)
+            .where(Photo.entity_id == School.id)
+            .order_by(Photo.created_at.desc(), Photo.id.desc())
+            .limit(1)
+            .correlate(School)
+            .scalar_subquery()
+        )
+
         statement = (
             select(
                 School.id.label("school_id"),
                 Campus.id.label("campus_id"),
                 School.name.label("school_name"),
-                Campus.name.label("campus_name")
+                Campus.name.label("campus_name"),
+                latest_photo.label("photo"),
             )
             .join(Campus, Campus.school_id == School.id)
             .join(Staff, Staff.school_id == School.id)

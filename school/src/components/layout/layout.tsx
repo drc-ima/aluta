@@ -9,6 +9,7 @@ import { useUserDefaultsProvider } from "@/contexts/userDefaultProvider";
 import { NavigationProgress } from "../navigationProgress";
 import { CampusSwitcher } from "../campusSwitcher";
 import { ThemeSwitch } from "../themeSwitch";
+import { SidebarContents } from "./sidebarContents";
 
 
 
@@ -26,6 +27,7 @@ export function Layout({ children }: { children?: React.ReactNode }) {
          /* if you want to use the normal app title instead of TeamSwitch dropdown */}
             {/* <AppTitle /> */}
           </SidebarHeader>
+          <SidebarContents />
         </Sidebar>
         <SidebarInset
           className={cn(

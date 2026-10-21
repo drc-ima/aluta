@@ -187,7 +187,7 @@ class RolePermission(AuditMixin, Base):
     )
 
     role_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("role.id", ondelete="CASCADE"), nullable=False)
-    permission_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("permission.id", ondelete="SET NULL"), nullable=False)
+    permission_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("permission.id", ondelete="CASCADE"), nullable=False)
     role: Mapped["Role"] = relationship(
         back_populates="role_permissions",
         # foreign_keys="[Role.role_id]"

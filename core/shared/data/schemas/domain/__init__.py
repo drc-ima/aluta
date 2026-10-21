@@ -145,6 +145,7 @@ class SchoolDomain(AuditSchemaMixin, BaseModel):
     
     name: Optional[str] = None
     active: Optional[bool] = None
+    verified: bool
     domain: Optional[str] = None
     business_email: str
     website: Optional[str] = None
