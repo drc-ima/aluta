@@ -1,47 +1,58 @@
 
-import { TabsContent } from "@/components/ui/tabs";
-import { PageWrapper } from "../../components";
+import { useLayout } from "@/contexts/layoutProvider";
+import { useParams } from "react-router-dom";
+import { useEffect } from "react";
+import StaffOverview from "./pages/overview";
+import Positions from "./pages/positions";
+import Departments from "./pages/departments";
 
-export default function StaffPage(){
+export default function StaffPage({module}: {module: any}) {
+    const { changeNavLinks } = useLayout();
+    const { nav, moduleSlug } = useParams();
+
+    useEffect(() => {
+
+        if(!module) return;
+        if(moduleSlug !== module.module.slug) {
+            return changeNavLinks([])
+        }
+        changeNavLinks([
+        {
+            title: "Overview",
+            href: `/${moduleSlug}/overview`,
+            disabled: false,
+            isActive: nav === "overview" || !nav
+        },
+        {
+            title: "All",
+            href: `/${moduleSlug}/all`,
+            disabled: false,
+            isActive: nav === "all"
+
+        },
+        {
+            title: "Departments",
+            href: `/${moduleSlug}/departments`,
+            disabled: false,
+            isActive: nav === "departments"
+        },
+        {
+            title: "Job Titles",
+            href: `/${moduleSlug}/positions`,
+            disabled: false,
+            isActive: nav === "positions"
+        }
+    ])
+    }, [moduleSlug, module, nav])
+
+
     return (
-        <PageWrapper
-            title="Staff"
-            description="Manage your staff here"
-            actions={[
-                {
-                    children: "Add Staff",
-                    size: "sm",
-                    type: "button"
-                }
-            ]}
-            topNavs={[
-                {
-                    children: "Overview",
-                    id:"overview",
-                    disabled: false
-                },
-                {
-                    children: "All",
-                    id:"all",
-                    disabled: false
-                },
-                {
-                    children: "Departments",
-                    id:"departments",
-                    disabled: false
-                }
-            ]}
-        >
-            <TabsContent value="overview">
-
-            </TabsContent>
-        </PageWrapper>
+        nav === "overview" || !nav ? (
+            <StaffOverview />
+        ): nav === "positions" ? (
+            <Positions />
+        ): nav === "departments" ? (
+            <Departments />
+        ) :null
     )
-}
-
-const AllTab = () => {
-
-    <TabsContent value="overview">
-
-    </TabsContent>
 }

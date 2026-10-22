@@ -10,11 +10,13 @@ import { NavigationProgress } from "../navigationProgress";
 import { CampusSwitcher } from "../campusSwitcher";
 import { ThemeSwitch } from "../themeSwitch";
 import { SidebarContents } from "./sidebarContents";
+import { TopNav } from "./topNav";
+import { useLayout } from "@/contexts/layoutProvider";
 
 
 
 export function Layout({ children }: { children?: React.ReactNode }) {
-  
+  const { navLinks } = useLayout()
   return (
     <>
       <NavigationProgress />
@@ -45,7 +47,7 @@ export function Layout({ children }: { children?: React.ReactNode }) {
         >
           <div className='flex min-h-0 flex-1 flex-col'>
             <Header fixed>
-              <div className="flex-grow-1"></div>
+              <TopNav links={navLinks} className='me-auto' />
               <ThemeSwitch />
               <ProfileDropdown />
             </Header>

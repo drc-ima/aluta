@@ -1,11 +1,9 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import React, { useState } from "react";
-import SchoolDetailsStep from "../components/steps/schoolDetailsStep";
+import React from "react";
 import { useFieldArray, useForm, type UseFormReturn } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import type { RegisterPayload } from "../api";
 import { Link, useNavigate } from "react-router-dom";
-import { CheckIcon, Loader2, Loader2Icon, MapPinHouseIcon, PlusCircleIcon, SchoolIcon, SearchIcon, UserIcon, XIcon, type LucideIcon } from "lucide-react";
+import { Loader2, Loader2Icon, PlusCircleIcon, SearchIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { z } from "zod";
@@ -38,8 +36,8 @@ const formSchema = z.object({
         address: z.record(z.string(), z.any()).readonly().optional(),
         addressStr: z.string().trim().min(1, "Please click on the search to populate the address field."),
         gps_code: z.string().trim().min(1, "Please enter a valid Ghana Post GPS Address"),
-        contacts: z.array(z.object({ 
-            contact_type: z.string().trim().min(1, "Select contact type"), 
+        contacts: z.array(z.object({
+            contact_type: z.string().trim().min(1, "Select contact type"),
             contact: z.string().trim().min(1, "Enter contact details.")
         }))
     }),
@@ -91,35 +89,34 @@ export default function Register() {
                 toast.error(JSON.parse(error.message).detail)
             },
             onSuccess: (deta) => {
-    
+
                 const addr = `${deta.Table[0].Area ? deta.Table[0].Area + ", " : ""}${deta.Table[0].District ? deta.Table[0].District + ", " : ""}${deta.Table[0].Region ? deta.Table[0].Region : ""}`
                 data.setValue("campus.addressStr", addr)
                 data.setValue("campus.address", deta.Table[0])
-                
+
             },
         })
     }
 
     const onSubmit = async (data: RegisterPayload | any) => {
-       registerSchoolMutation.mutate({
-        ...data,
-        campus: {
-            ...data.campus,
-            address: JSON.stringify(data.campus.address)
-        }
-    }, {
-        onSuccess: (_) => {
-            toast.success("New school registered successfully. Check your business email and personal email to complete the verification process.")
-            navigate("/")
-        },
-        onError: (error) => {
-            console.log(error.message)
-            toast.error(JSON.parse(error.message).detail)
-        }
-       })
+        registerSchoolMutation.mutate({
+            ...data,
+            campus: {
+                ...data.campus,
+                address: JSON.stringify(data.campus.address)
+            }
+        }, {
+            onSuccess: (_) => {
+                toast.success("New school registered successfully. Check your business email and personal email to complete the verification process.")
+                navigate("/")
+            },
+            onError: (error) => {
+                toast.error(JSON.parse(error.message).detail)
+            }
+        })
     };
 
-    
+
     return (
         <React.Fragment>
 
@@ -405,17 +402,14 @@ export default function Register() {
                                 )
                             }}
                         /><Button
-                                variant={"default"}
-                                type="submit"
-                                disabled={registerSchoolMutation.isPending}
-                            >
-                                {registerSchoolMutation.isPending ? <Loader2 className='animate-spin' /> : undefined}
-                                Submit
-                            </Button>
-                        <div className="flex justify-end items-center mb-[1rem]!">
+                            variant={"default"}
+                            type="submit"
+                            disabled={registerSchoolMutation.isPending}
+                        >
+                            {registerSchoolMutation.isPending ? <Loader2 className='animate-spin' /> : undefined}
+                            Submit
+                        </Button>
 
-                            
-                        </div>
                     </form>
 
                 </Form>
@@ -435,16 +429,16 @@ const ContactFields = ({ data }: { data: UseFormReturn<RegisterPayload> | any })
             {fields.map((_, index) => (
                 <div className="flex items-end gap-[1rem] mb-[1rem]" key={index}>
                     <FormField
-                    
+
                         control={data.control}
                         name={`campus.contacts.${index}.contact_type`}
                         render={({ field }) => {
-                            
+
                             return (
                                 <FormItem className="">
-                                    <FormLabel>Email</FormLabel>
+                                    <FormLabel>Type</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        
+
                                         <FormControl>
                                             <SelectTrigger>
                                                 <SelectValue placeholder='Select type' />
@@ -480,11 +474,11 @@ const ContactFields = ({ data }: { data: UseFormReturn<RegisterPayload> | any })
                         )}
                     />
                     <Button type="button" size={"icon"} variant={"destructive"} onClick={() => {
-                        if(index === 0){
+                        if (index === 0) {
                             toast.error("Please add at least one contact of for the location.")
                             return
                         }
-                    
+
                         remove(index)
                     }}>
                         <XIcon />

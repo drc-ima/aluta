@@ -2,6 +2,7 @@
 import { API_BASE_URL, API_ENDPOINTS } from "@/api/api.endpoints";
 import { createContext, useCallback, useContext, useEffect, useState } from "react"
 import { jwtDecode } from 'jwt-decode';
+import { toast } from "sonner";
 
 type AuthProviderProps = {
     children: React.ReactNode
@@ -126,6 +127,11 @@ export function AuthProvider({
                 if (response.status === 401) {
                     // toast.error("No valid session found. Redirecting to login")
                     // window.location.href = redirectTo
+                }
+                    console.log(message, response.status)
+                if(response.status === 403) {
+                    
+                    toast.error(JSON.parse(message).detail)
                 }
                 throw new Error(
                     message || `Request failed (${response.status})`,

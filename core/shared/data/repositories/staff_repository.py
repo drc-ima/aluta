@@ -5,12 +5,15 @@ from sqlalchemy.orm import Session
 
 from modules.staff.schemas.requests.staff import CreateStaffRequest
 from shared.data.models import Staff, StaffCampus
+from shared.data.repositories.repository import BaseRepository
 from shared.data.repositories.school_repository import SchoolRepository
 from shared.data.schemas.domain import StaffCampusDomain, StaffDomain
 from shared.data.schemas.exceptions import RecordNotFoundException
 
 
-class StaffRepository:
+class StaffRepository(BaseRepository[Staff, StaffDomain]):
+
+    model = StaffDomain
 
     def create_staff(self, db: Session, data: StaffDomain) -> StaffDomain:
 

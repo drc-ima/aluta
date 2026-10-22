@@ -4,8 +4,9 @@ import uuid
 from sqlalchemy.orm import Session
 
 from handlers.exceptions import exception_catcher
+from middlewares.context.request import get_user_id_email
 from middlewares.logging.logger import logger
-from modules.school.schemas.requests.department import CreateSchoolDepartmentRequest
+from modules.staff.schemas.requests.department import CreateSchoolDepartmentRequest
 from shared.data.repositories.department_repository import DepartmentRepository
 from shared.data.schemas.domain import DepartmentDomain
 
@@ -19,15 +20,17 @@ class DepartmentServices:
         return [department.model_dump(mode="json") for department in departments]
 
     @exception_catcher
-    def add_school_department(db: Session, request: CreateSchoolDepartmentRequest, school_id: uuid.UUID, user: dict) -> DepartmentDomain:
+    def add_school_department(db: Session, request: CreateSchoolDepartmentRequest, school_id: uuid.UUID) -> DepartmentDomain:
         try:
             with db.begin():
+
+                created_by_id = get_user_id_email().get("id")
                 data = DepartmentDomain(
                     school_id=school_id,
                     name=request.name,
                     description=request.description,
-                    created_by_id=user.get("id"),
-                    updated_by_id=user.get("id"),
+                    created_by_id=created_by_id,
+                    updated_by_id=created_by_id,
                     created_at=datetime.now(timezone.utc),
                     updated_at=datetime.now(timezone.utc)
                     

@@ -14,5 +14,13 @@ export const API_ENDPOINTS = {
 
     // User Defaults
     USER_DEFAULTS: "/user/defaults",
-    UPDATE_USER_DEFAULTS: "/user/defaults"
+    UPDATE_USER_DEFAULTS: "/user/defaults",
+
+    // Positions
+    CREATE_POSITION: (school_id: string) => `/staff/positions/${school_id}`,
+    FETCH_POSITIONS: (school_id: string) => `/staff/positions/${school_id}`,
+
+    // Departments
+    CREATE_DEPARTMENT: (school_id: string) => `/staff/departments/${school_id}`,
+    FETCH_DEPARTMENTS: (school_id: string) => `/staff/departments/${school_id}`,
 }

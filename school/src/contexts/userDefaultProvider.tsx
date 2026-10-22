@@ -134,7 +134,7 @@ export function UserDefaultsProvider({
         >
             {
                 user ? (
-                    schoolsCampuses.isLoading && !selectedSchool && !selectedCampus ?
+                    schools.isLoading && schoolsCampuses.isLoading && !selectedSchool && !selectedCampus ?
                         (
                             <div className=" flex h-svh w-full overflow-hidden">
                                 <div className="flex-grow-1 flex justify-center items-center">

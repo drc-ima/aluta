@@ -322,7 +322,8 @@ class Position(AuditMixin, Base):
     school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("school.id", ondelete="CASCADE"))
     name: Mapped[str] = mapped_column(String, index=True)
     description: Mapped[str] = mapped_column(String, nullable=True)
-    employement_type: Mapped[EMPLOYMENT_TYPE] = mapped_column(String)
+    employment_type: Mapped[EMPLOYMENT_TYPE] = mapped_column(String)
+    rank: Mapped[str] = mapped_column(String, nullable=True)
 
     school: Mapped[School] = relationship(back_populates="positions", foreign_keys="[Position.school_id]")
     staff_positions: Mapped[list["StaffPosition"]] = relationship(back_populates="position", foreign_keys="[StaffPosition.position_id]")

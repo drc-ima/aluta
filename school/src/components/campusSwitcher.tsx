@@ -49,7 +49,7 @@ export function CampusSwitcher() {
             sideOffset={4}
           >
             <DropdownMenuLabel className='text-xs text-muted-foreground'>
-              Campuses
+              Locations
             </DropdownMenuLabel>
             {schoolsCampuses && schoolsCampuses.filter(sc => sc.campus_id !== selectedCampus?.id).map((sc, index) => (
               <DropdownMenuItem
@@ -69,7 +69,7 @@ export function CampusSwitcher() {
               <div className='flex size-6 items-center justify-center rounded-md border bg-background'>
                 <Plus className='size-4' />
               </div>
-              <div className='font-medium text-muted-foreground'>Add Campus</div>
+              <div className='font-medium text-muted-foreground'>Add Location</div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

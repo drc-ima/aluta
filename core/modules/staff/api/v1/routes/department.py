@@ -4,13 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from middlewares.logging.logger import logger
-from modules.school.schemas.requests.department import CreateSchoolDepartmentRequest
+from modules.staff.schemas.requests.department import CreateSchoolDepartmentRequest
 from modules.school.schemas.responses import SchoolResponse
-from modules.school.services.department import DepartmentServices
+from modules.staff.services.department import DepartmentServices
 from shared.data.schemas.domain import DepartmentDomain
-from shared.data.schemas.exceptions import RecordAlreadyExistsException
 from shared.data.session import get_db
-from shared.utils.permissions import require_permission
+from shared.utils.permissions import require_permission, school_require_permission
 
 router = APIRouter(prefix="/departments", tags=["Schools", "Departments"])
 
@@ -21,7 +20,7 @@ def school_departments(
     school_id: uuid.UUID,
     db: Session = Depends(get_db),
     user: dict = Depends(
-        require_permission("departments:read", "departments:write")
+        school_require_permission("staff:read", "staff:write")
     ),
 ):
     try:
@@ -52,14 +51,14 @@ def create_school_department(
     school_id: uuid.UUID,
     db: Session = Depends(get_db),
     user: dict = Depends(
-        require_permission("departments:read", "departments:write")
+        school_require_permission("staff:read", "staff:write")
     )
 ): 
 
     try:
         logger.info(f"Router: Fetching academic periods for a campus")
 
-        DepartmentServices.add_school_department(db, body, school_id, user)
+        DepartmentServices.add_school_department(db, body, school_id)
 
         return SchoolResponse(
             message="New department added", school_id=school_id

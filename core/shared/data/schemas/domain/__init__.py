@@ -222,6 +222,8 @@ class PositionDomain(AuditSchemaMixin, BaseModel):
     name: str
     description: Optional[str] = None
     employment_type: EMPLOYMENT_TYPE
+    rank: Optional[str] = None
+    staff_positions: list["StaffPositionDomain"] = Field(default_factory=list)
 
     # school: Optional[SchoolDomain] = None
 
