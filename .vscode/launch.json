@@ -1,19 +1,12 @@
 {
     "configurations": [
         {
-            "name": "Launch via NPM",
+            "name": "Host School",
+            "type": "node-terminal",
             "request": "launch",
-            "runtimeArgs": [
-                "run-script",
-                "debug"
-            ],
-            "runtimeExecutable": "npm",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "type": "node"
+            "command": "npm run dev",
+            "cwd": "${workspaceFolder}/school"
         },
-        
         {
             "name": "Host Core",
             "type": "debugpy",
