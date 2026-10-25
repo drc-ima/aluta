@@ -23,4 +23,8 @@ export const API_ENDPOINTS = {
     // Departments
     CREATE_DEPARTMENT: (school_id: string) => `/staff/departments/${school_id}`,
     FETCH_DEPARTMENTS: (school_id: string) => `/staff/departments/${school_id}`,
+
+    // Staffs
+    FETCH_STAFFS: (school_id: string) => `/staff/${school_id}`,
+    CREATE_STAFF: (school_id: string) => `/staff/${school_id}`,
 }

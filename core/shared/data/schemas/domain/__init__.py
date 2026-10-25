@@ -1,6 +1,7 @@
 from datetime import datetime
 from encodings.punycode import T
 from enum import Enum
+import json
 from typing import Callable, Iterable, Optional, Any
 
 import uuid
@@ -67,7 +68,7 @@ class EMPLOYMENT_TYPE(str, Enum):
     RESIGNED = "Resigned"
 
 
-class UserDomain(AuditSchemaMixin, BaseModel):
+class UserInputDomain(AuditSchemaMixin, BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     first_name: str
@@ -84,12 +85,37 @@ class UserDomain(AuditSchemaMixin, BaseModel):
     user_permissions: list["UserPermissionDomain"] = Field(
         default_factory=list
     )
-    staffs: list["StaffDomain"] = Field(default_factory=list)
+    # staffs: list["StaffDomain"] = Field(default_factory=list)
     defaults: list["UserDefaultModuleDomain"] = Field(default_factory=list)
 
-    def full_name(self):
+    @property
+    def full_name(self) -> str:
         return f"{self.first_name}{' ' + self.middle_name + ' ' if self.middle_name else ' '}{self.last_name}"
-    
+
+
+class UserDomain(AuditSchemaMixin, BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    first_name: str
+    middle_name: Optional[str] = None
+    last_name: str
+    user_type: UserType
+    verified: bool
+    is_active: bool = False
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    # password: Optional[str] = None
+    username: str
+    user_roles: list["UserRoleDomain"] = Field(default_factory=list)
+    user_permissions: list["UserPermissionDomain"] = Field(
+        default_factory=list
+    )
+    # staffs: list["StaffDomain"] = Field(default_factory=list)
+    defaults: list["UserDefaultModuleDomain"] = Field(default_factory=list)
+
+    @property
+    def full_name(self) -> str:
+        return f"{self.first_name}{' ' + self.middle_name + ' ' if self.middle_name else ' '}{self.last_name}"
 
 class RoleDomain(AuditSchemaMixin, BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -152,9 +178,9 @@ class SchoolDomain(AuditSchemaMixin, BaseModel):
     slug: Optional[str] = None
 
     roles: list[RoleDomain] = Field(default_factory=list)
-    positions: list["PositionDomain"] = Field(default_factory=list)
-    staffs: list["StaffDomain"] = Field(default_factory=list)
-    departments: list["DepartmentDomain"] = Field(default_factory=list)
+    # positions: list["PositionDomain"] = Field(default_factory=list)
+    # staffs: list["StaffDomain"] = Field(default_factory=list)
+    # departments: list["DepartmentDomain"] = Field(default_factory=list)
     modules: list["SchoolModuleDomain"] = Field(default_factory=list)
     campuses: list["CampusDomain"] = Field(default_factory=list)
 
@@ -172,6 +198,15 @@ class CampusDomain(AuditSchemaMixin, BaseModel):
     # school: Optional[SchoolDomain] = None
     # created_by: Optional[UserDomain] = None
     # updated_by: Optional[UserDomain] = None
+
+    @property
+    def address(self) -> dict | None:
+        if not self.address:
+            return None
+        try:
+            return json.loads(self.address)
+        except:
+            return None
 
 
 class ContactType(str, Enum):
@@ -196,8 +231,9 @@ class StaffDomain(AuditSchemaMixin, BaseModel):
     staff_no: str
     school_id: uuid.UUID
     active: Optional[bool] = False
+    parent_id: Optional[uuid.UUID] = None
 
-    # user: Optional[UserDomain] = None
+    user: Optional[UserDomain] = None
     # school: Optional[SchoolDomain] = None
     parent: Optional["StaffDomain"] = None
     # children: list["StaffDomain"] = Field(default_factory=list)
@@ -223,7 +259,7 @@ class PositionDomain(AuditSchemaMixin, BaseModel):
     description: Optional[str] = None
     employment_type: EMPLOYMENT_TYPE
     rank: Optional[str] = None
-    staff_positions: list["StaffPositionDomain"] = Field(default_factory=list)
+    # staff_positions: list["StaffPositionDomain"] = Field(default_factory=list)
 
     # school: Optional[SchoolDomain] = None
 
@@ -234,7 +270,7 @@ class StaffPositionDomain(AuditSchemaMixin, BaseModel):
     staff_id: uuid.UUID
     position_id: uuid.UUID
     start_date: datetime
-    end_date: datetime
+    end_date: Optional[datetime] = None
 
     # staff: Optional[StaffDomain] = None
     position: Optional[PositionDomain] = None
@@ -264,7 +300,7 @@ class StaffDepartmentDomain(AuditSchemaMixin, BaseModel):
 
     staff_id: uuid.UUID
     department_id: uuid.UUID
-    ordinal: int
+    # ordinal: int
 
     # staff: Optional[StaffDomain] = None
     department: Optional[DepartmentDomain] = None

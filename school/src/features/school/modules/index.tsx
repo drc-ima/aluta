@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom"
-import StaffPage from "./staff"
+import StaffModule from "./staff"
 import { useEffect, useState } from "react";
 import { useUserDefaultsProvider } from "@/contexts/userDefaultProvider";
 
@@ -15,6 +15,6 @@ export default function ModulePage(){
         setSelectedModule(module)
     }, [moduleSlug, selectedSchool])
     return (
-        moduleSlug === "staff" ? <StaffPage module={selectedModule} /> : <></>
+        moduleSlug === "staff" ? <StaffModule module={selectedModule} /> : <></>
     )
 }

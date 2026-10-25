@@ -1,15 +1,15 @@
 import { useUserDefaultsProvider } from "@/contexts/userDefaultProvider";
 import { PageWrapper } from "@/features/school/components";
-import { useSchoolPositions } from "@/features/school/hooks";
-import { useState } from "react";
 import { CreatePositionDrawer } from "../components/createPositionDrawer";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useSearchParams } from "react-router-dom";
+import { useSchoolPositions } from "../hooks";
 
 
 export default function Positions() {
     const { selectedSchool } = useUserDefaultsProvider()
-    const positions = useSchoolPositions({school_id:selectedSchool?.id, enabled: selectedSchool !== null})
-    const [openAdd, setOpenAdd] = useState(false)
+    const positions = useSchoolPositions({school_id:selectedSchool !== null ? selectedSchool?.id : "", enabled: selectedSchool !== null})
+    const [searchParams, setSearchParams] = useSearchParams()
     
     return (
             <PageWrapper
@@ -20,7 +20,10 @@ export default function Positions() {
                         children: "Add Job Title",
                         size: "sm",
                         type: "button",
-                        onClick: () => setOpenAdd(true)
+                        onClick: () => {
+                            searchParams.set("action", "create")
+                            setSearchParams(searchParams)
+                        }
                     }
                 ]}
     
@@ -63,8 +66,12 @@ export default function Positions() {
                     </Table>
                 </div>
                 <CreatePositionDrawer 
-                    open={openAdd}
-                    handleOpenChange={(open) => setOpenAdd(open)}
+                    handleOpenChange={(open) => {
+                        if(!open){
+                            searchParams.delete("action")
+                            setSearchParams(searchParams)
+                        }
+                    }}
                     refetch={() => positions.refetch()}
                 />
             </PageWrapper>

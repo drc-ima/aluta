@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, joinedload, contains_eager, selectinload
 
 from modules.user.schemas.requests.user import CreateUserRequest
 from shared.data.models import Permission, Role, User, UserPermission, UserRole
-from shared.data.schemas.domain import UserDomain
+from shared.data.schemas.domain import UserDomain, UserInputDomain
 from shared.data.schemas.exceptions import RecordNotFoundException
 
 
@@ -50,7 +50,7 @@ class UserRepository:
 
         return user.to_pydantic() if user else None
 
-    def create_user(self, db: Session, data: UserDomain) -> UserDomain:
+    def create_user(self, db: Session, data: UserInputDomain) -> UserDomain:
 
         # username = data.email if data.username_field == "Email" else data.phone
         
@@ -66,7 +66,8 @@ class UserRepository:
             # is_active=False,
         )
 
-        user.set_password(data.password)
+        if data.password:
+            user.set_password(data.password)
 
         db.add(user)
 

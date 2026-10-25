@@ -5,8 +5,9 @@ import { useEffect } from "react";
 import StaffOverview from "./pages/overview";
 import Positions from "./pages/positions";
 import Departments from "./pages/departments";
+import Staff from "./pages/staff";
 
-export default function StaffPage({module}: {module: any}) {
+export default function StaffModule({module}: {module: any}) {
     const { changeNavLinks } = useLayout();
     const { nav, moduleSlug } = useParams();
 
@@ -53,6 +54,6 @@ export default function StaffPage({module}: {module: any}) {
             <Positions />
         ): nav === "departments" ? (
             <Departments />
-        ) :null
+        ) : nav === "all" ? <Staff /> : null
     )
 }

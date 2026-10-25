@@ -5,13 +5,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetClose, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { useUserDefaultsProvider } from "@/contexts/userDefaultProvider";
-import { EmploymentType, type PositionPayload } from "@/features/school/api";
-import { useCreateSchoolPosition } from "@/features/school/hooks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useCreateSchoolPosition } from "../hooks";
+import { EmploymentType, type PositionPayload } from "../api";
 
 
 const formSchema = z.object({
@@ -24,13 +25,11 @@ const formSchema = z.object({
 type PositionForm = z.infer<typeof formSchema>
 
 export type CreateDialogProps = {
-    open: boolean;
     handleOpenChange: (open: boolean) => void,
     refetch: () => void;
 }
 
 export function CreatePositionDrawer({
-    open,
     handleOpenChange,
     refetch
 }: CreateDialogProps) {
@@ -45,19 +44,28 @@ export function CreatePositionDrawer({
         }
     })
     const { selectedSchool } = useUserDefaultsProvider()
-    const {isPending, mutate} = useCreateSchoolPosition(selectedSchool?.id)
-    
+    const { isPending, mutate } = useCreateSchoolPosition(selectedSchool !== null ? selectedSchool?.id : "")
+    const [searchParams, _] = useSearchParams()
+    const navigate = useNavigate()
+    const goto = searchParams.get("returnTo") || "";
+    const action = searchParams.get("action") || "";
+
+    const open = action == "create" ? true : false;
+
 
     const handleSubmit = (data: PositionForm | PositionPayload | any) => {
 
         mutate({
             ...data
         }, {
-            onSuccess: (data) => {
+            onSuccess: () => {
                 toast.success("New job title added successfully.")
-                console.log(data)
-                refetch()
-                handleOpenChange(false)
+                if (goto) {
+                    navigate(goto)
+                } else {
+                    refetch()
+                    handleOpenChange(false)
+                }
             },
             onError: (error) => {
                 console.error(error)
@@ -70,8 +78,12 @@ export function CreatePositionDrawer({
         <Sheet
             open={open}
             onOpenChange={(open) => {
-                form.reset()
-                handleOpenChange(open)
+                if (goto) {
+                    navigate(goto)
+                } else {
+                    form.reset()
+                    handleOpenChange(open)
+                }
             }}
         >
             <SheetContent className='flex flex-col'>

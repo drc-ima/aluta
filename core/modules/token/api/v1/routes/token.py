@@ -48,16 +48,16 @@ def normal_login(request: TokenRequest, db: Session = Depends(get_db)):
                 for role in user.user_roles
             ],
             permissions=[perm.permission.code_name for perm in user.user_permissions],
-            staffs=[
-                {
-                    "id": str(staff.id),
-                    "school_id": str(staff.school_id),
-                    "campuses": [
-                        str(campus.campus.id) for campus in staff.staff_campuses
-                    ],
-                }
-                for staff in user.staffs
-            ],
+            # staffs=[
+            #     {
+            #         "id": str(staff.id),
+            #         "school_id": str(staff.school_id),
+            #         "campuses": [
+            #             str(campus.campus.id) for campus in staff.staff_campuses
+            #         ],
+            #     }
+            #     for staff in user.staffs
+            # ],
         )
 
         refresh_token = token(
@@ -81,16 +81,16 @@ def normal_login(request: TokenRequest, db: Session = Depends(get_db)):
                 for role in user.user_roles
             ],
             permissions=[perm.permission.code_name for perm in user.user_permissions],
-            staffs=[
-                {
-                    "id": str(staff.id),
-                    "school_id": str(staff.school_id),
-                    "campuses": [
-                        str(campus.campus.id) for campus in staff.staff_campuses
-                    ],
-                }
-                for staff in user.staffs
-            ],
+            # staffs=[
+            #     {
+            #         "id": str(staff.id),
+            #         "school_id": str(staff.school_id),
+            #         "campuses": [
+            #             str(campus.campus.id) for campus in staff.staff_campuses
+            #         ],
+            #     }
+            #     for staff in user.staffs
+            # ],
         )
 
         content = {"access_token": access_token}
@@ -155,16 +155,16 @@ def generate_access_token(db: Session = Depends(get_db), refresh_token: str = De
                 for role in user.user_roles
             ],
             permissions=[perm.permission.code_name for perm in user.user_permissions],
-            staffs=[
-                {
-                    "id": str(staff.id),
-                    "school_id": str(staff.school_id),
-                    "campuses": [
-                        str(campus.campus.id) for campus in staff.staff_campuses
-                    ],
-                }
-                for staff in user.staffs
-            ],
+            # staffs=[
+            #     {
+            #         "id": str(staff.id),
+            #         "school_id": str(staff.school_id),
+            #         "campuses": [
+            #             str(campus.campus.id) for campus in staff.staff_campuses
+            #         ],
+            #     }
+            #     for staff in user.staffs
+            # ],
         )
         content = {"access_token": access_token}
         

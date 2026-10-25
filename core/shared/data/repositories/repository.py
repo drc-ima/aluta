@@ -44,7 +44,7 @@ class BaseRepository(Generic[ModelT, DomainT]):
         db: Session,
         data: dict[str, Any],
         filters: dict[str, Any],
-    ) -> ModelT | None:
+    ) -> DomainT | None:
         instance = (
             db.query(cls.model)
             .filter_by(**filters)
@@ -61,7 +61,7 @@ class BaseRepository(Generic[ModelT, DomainT]):
         db.flush()
         db.refresh(instance)
 
-        return instance
+        return cast(DomainT, instance.to_pydantic())
 
     @classmethod
     def bulk_create(

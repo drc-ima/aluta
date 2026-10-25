@@ -37,7 +37,7 @@ class PositionServices:
                 
                 return [position.model_dump(mode="json") for position in positions]
         except Exception as e:
-            logger.error(f"Service: Error creatomg academic period: {e}")
+            logger.error(f"Service: Error creating academic period: {e}")
             db.rollback()
             raise
         finally:

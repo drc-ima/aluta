@@ -1,4 +1,5 @@
 import { API_ENDPOINTS } from "@/api/api.endpoints";
+import type { SchoolT } from "@/types/staff";
 
 export interface LoginResponse {
   access_token: string;
@@ -17,7 +18,7 @@ export interface LoginPayload {
 export function userSchoolsApi(
   fetchInstance: FetchInstance,
 ) {
-  return fetchInstance<any[]>(
+  return fetchInstance<SchoolT[]>(
     API_ENDPOINTS.USER_SCHOOLS,
     {
       method: "GET"
@@ -67,73 +68,3 @@ export function schoolAddressApi(
   )
 }
 
-export function positionsApi(
-  fetchInstance: FetchInstance,
-  school_id: string
-) {
-  return fetchInstance<any[]>(
-    API_ENDPOINTS.FETCH_POSITIONS(school_id),
-    {
-      method: "GET"
-    }
-  )
-}
-
-export enum EmploymentType {
-  FULL_TIME = "Full Time",
-  PART_TIME = "Part time",
-  CONTRACTOR = "Contractor",
-  DISMISSED = "Dismissed",
-  RESIGNED = "Resigned",
-}
-
-export type PositionPayload = {
-  name: string;
-  description?: string;
-  employment_type: EmploymentType
-} & BodyInit
-
-export function createPositionApi(
-  fetchInstance: FetchInstance,
-  school_id: string,
-  payload: PositionPayload
-) {
-  return fetchInstance<any>(
-    API_ENDPOINTS.CREATE_POSITION(school_id),
-    {
-      method: "POST",
-      body: payload
-    }
-  )
-}
-
-export function departmentsApi(
-  fetchInstance: FetchInstance,
-  school_id: string
-) {
-  return fetchInstance<any[]>(
-    API_ENDPOINTS.FETCH_DEPARTMENTS(school_id),
-    {
-      method: "GET"
-    }
-  )
-}
-
-export type DepartmentPayload = {
-  name: string;
-  description?: string;
-} & BodyInit
-
-export function createDepartmentApi(
-  fetchInstance: FetchInstance,
-  school_id: string,
-  payload: DepartmentPayload
-) {
-  return fetchInstance<any>(
-    API_ENDPOINTS.CREATE_DEPARTMENT(school_id),
-    {
-      method: "POST",
-      body: payload
-    }
-  )
-}

@@ -5,11 +5,12 @@ from sqlalchemy.orm import Session
 
 from modules.school.schemas.requests.school import CreateCampusRequest, RegisterSchoolRequest, SchoolSerializer
 from shared.data.models import Campus, CampusContact, Photo, School, Staff
+from shared.data.repositories.repository import BaseRepository
 from shared.data.schemas.domain import CampusDomain, SchoolDomain
 from shared.data.schemas.exceptions import RecordNotFoundException
 
-class SchoolRepository:
-
+class SchoolRepository(BaseRepository[School, SchoolDomain]):
+    model = School
     def get_school_by_domain(self, db: Session, domain: str) -> SchoolDomain | None:
         
         school = (

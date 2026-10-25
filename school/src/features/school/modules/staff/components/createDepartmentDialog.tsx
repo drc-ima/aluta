@@ -2,9 +2,7 @@ import { z } from "zod";
 import type { CreateDialogProps } from "./createPositionDrawer";
 import { useForm } from "react-hook-form";
 import { useUserDefaultsProvider } from "@/contexts/userDefaultProvider";
-import { useCreateSchoolDepartment } from "@/features/school/hooks";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { DepartmentPayload } from "@/features/school/api";
 import { toast } from "sonner";
 import {
     Dialog,
@@ -19,6 +17,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { useCreateSchoolDepartment } from "../hooks";
+import type { DepartmentPayload } from "../api";
 
 
 const formSchema = z.object({
@@ -28,7 +29,6 @@ const formSchema = z.object({
 
 type DepartmentForm = z.infer<typeof formSchema>
 export default function CreateDepartmentDialog({
-    open,
     handleOpenChange,
     refetch
 }: CreateDialogProps) {
@@ -40,18 +40,25 @@ export default function CreateDepartmentDialog({
         }
     })
     const { selectedSchool } = useUserDefaultsProvider()
-    const { isPending, mutate } = useCreateSchoolDepartment(selectedSchool?.id)
+    const { isPending, mutate } = useCreateSchoolDepartment(selectedSchool !== null ? selectedSchool?.id : "")
+    const [searchParams, _] = useSearchParams()
+    const goto = searchParams.get("returnTo") || "";
+    const action = searchParams.get("action") || "";
 
+    const open = action == "create" ? true : false;
     const handleSubmit = (data: DepartmentForm | DepartmentPayload | any) => {
 
         mutate({
             ...data
         }, {
-            onSuccess: (data) => {
+            onSuccess: () => {
                 toast.success("New department added successfully.")
-                console.log(data)
-                refetch()
-                handleOpenChange(false)
+                if (goto) {
+                    window.location.href = goto
+                } else {
+                    refetch()
+                    handleOpenChange(false)
+                }
             },
             onError: (error) => {
                 console.error(error)

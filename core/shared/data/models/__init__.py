@@ -82,11 +82,11 @@ class User(AuditMixin, Base):
     middle_name: Mapped[str] = mapped_column(String, nullable=True)
     last_name: Mapped[str] = mapped_column(String, nullable=False)
     user_type: Mapped[UserType] = mapped_column(String, nullable=False)
-    password: Mapped[str] = mapped_column(String, nullable=True)
+    password: Mapped[str] = deferred(mapped_column(String, nullable=True))
     verified: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
     is_active: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
     email: Mapped[str] = mapped_column(String, nullable=True)
-    phone: Mapped[str] = deferred(mapped_column(String, nullable=True))
+    phone: Mapped[str] = mapped_column(String, nullable=True)
     username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     user_permissions: Mapped[list["UserPermission"]] = relationship(
         back_populates="user",
@@ -379,7 +379,7 @@ class StaffDepartment(AuditMixin, Base):
 
     department_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("department.id", ondelete="CASCADE"))
     staff_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("staff.id", ondelete="CASCADE"))
-    ordinal: Mapped[int] = mapped_column(Integer)
+    # ordinal: Mapped[int] = mapped_column(Integer)
 
     staff: Mapped[Staff] = relationship(back_populates="staff_departments")
     department: Mapped[Department] = relationship(back_populates="department_staffs")

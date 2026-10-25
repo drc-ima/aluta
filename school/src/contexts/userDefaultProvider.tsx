@@ -1,15 +1,13 @@
 import type { DefaultModulePayload } from "@/api/api"
 import { Layout } from "@/components/layout/layout"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import type { SchoolCampusProps } from "@/features/school/api"
 import { useUpdateDefaults, useUserSchools, useUserSchoolsCampuses } from "@/features/school/hooks"
-import { useUserDefaults } from "@/hooks/queries"
 import { ArrowRightIcon, Loader2Icon, LoaderIcon } from "lucide-react"
-import { createContext, useContext, useEffect, useMemo, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { createContext, useContext, useEffect, useMemo } from "react"
 import { toast } from "sonner"
 import { useAuth } from "./authProvider"
+import type { CampusT, SchoolT } from "@/types/staff"
 
 export type DefaultsProps = {
     [key: string]: string
@@ -20,8 +18,8 @@ type UserDefaultsProviderState = {
     loadingSchools: boolean,
     loadingSettings: boolean,
     schoolsCampuses: SchoolCampusProps[] | undefined,
-    selectedCampus: any | null,
-    selectedSchool: any | null,
+    selectedCampus: CampusT | null,
+    selectedSchool: SchoolT | null,
     schoolRole: any | null;
 }
 const UserDefaultsContext = createContext<UserDefaultsProviderState | undefined>(undefined);
