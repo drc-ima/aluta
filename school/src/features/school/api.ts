@@ -44,9 +44,6 @@ export function userSchoolsCampusesApi(
   )
 }
 
-
-
-
 export type GpsAddress = {
   Table: { [key: string]: any }[]
 }
@@ -67,4 +64,3 @@ export function schoolAddressApi(
     }
   )
 }
-

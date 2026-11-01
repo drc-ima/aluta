@@ -1,12 +1,13 @@
 import { API_ENDPOINTS } from "@/api/api.endpoints";
 import type { FetchInstance } from "@/types/fetchInstance";
-import { type StaffT } from "@/types/staff";
+import type { PositionT, StaffT } from "@/types/staff";
+import type { QueryParams } from "./hooks";
 
 export function positionsApi(
     fetchInstance: FetchInstance,
     school_id: string
 ) {
-    return fetchInstance<any[]>(
+    return fetchInstance<PositionT[]>(
         API_ENDPOINTS.FETCH_POSITIONS(school_id),
         {
             method: "GET"
@@ -83,12 +84,41 @@ export type StaffReponse = {
 
 export function staffsApi(
     fetchInstance: FetchInstance,
-    school_id: string
+    school_id: string,
+    params: QueryParams,
+    signal: AbortSignal
 ) {
+    const query = new URLSearchParams()
+    if (params.page) {
+        query.set("page", String(params.page));
+    }
+    if (params.limit) {
+        query.set("limit", String(params.limit));
+    }
+    if (params.search) {
+        query.set("search", params.search);
+    }
+
+    if (params.sorting) {
+        const sort = params.sorting[0];
+
+        if (sort) {
+            query.set("sortBy", sort.id);
+            query.set("sortOrder", sort.desc ? "desc" : "asc");
+        }
+    }
+
+    if (params.filters) {
+        // The backend must understand this filters format.
+        query.set("filters", JSON.stringify(params.filters));
+    }
+
+
     return fetchInstance<StaffReponse>(
-        API_ENDPOINTS.FETCH_STAFFS(school_id),
+        `${API_ENDPOINTS.FETCH_STAFFS(school_id)}?${query}`,
         {
-            method: "GET"
+            method: "GET",
+            signal
         }
     )
 }

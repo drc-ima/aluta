@@ -6,16 +6,17 @@ import StaffOverview from "./pages/overview";
 import Positions from "./pages/positions";
 import Departments from "./pages/departments";
 import Staff from "./pages/staff";
+import type { SchoolModuleT } from "@/types/staff";
 
-export default function StaffModule({module}: {module: any}) {
+export default function StaffModule({module}: {module: SchoolModuleT | null}) {
     const { changeNavLinks } = useLayout();
     const { nav, moduleSlug } = useParams();
 
     useEffect(() => {
-
         if(!module) return;
         if(moduleSlug !== module.module.slug) {
-            return changeNavLinks([])
+            changeNavLinks([])
+            return
         }
         changeNavLinks([
         {

@@ -1,10 +1,10 @@
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
 from modules.school.schemas.requests.school import CreateCampusRequest, RegisterSchoolRequest, SchoolSerializer
-from shared.data.models import Campus, CampusContact, Photo, School, Staff
+from shared.data.models import Campus, CampusContact, Media, School, Staff
 from shared.data.repositories.repository import BaseRepository
 from shared.data.schemas.domain import CampusDomain, SchoolDomain
 from shared.data.schemas.exceptions import RecordNotFoundException
@@ -153,9 +153,14 @@ class SchoolRepository(BaseRepository[School, SchoolDomain]):
     def get_staff_schools_with_campuses(db: Session, staff_ids: list[dict]):
 
         latest_photo = (
-            select(Photo.blob_url)
-            .where(Photo.entity_id == School.id)
-            .order_by(Photo.created_at.desc(), Photo.id.desc())
+            select(Media.blob_url)
+            .where(
+                and_(
+                        Media.entity_id == School.id,
+                        Media.media_type == "Profile"
+                    )
+            )
+            .order_by(Media.created_at.desc(), Media.id.desc())
             .limit(1)
             .correlate(School)
             .scalar_subquery()

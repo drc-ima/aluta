@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useCreateSchoolDepartment } from "../hooks";
 import type { DepartmentPayload } from "../api";
 
@@ -32,6 +32,7 @@ export default function CreateDepartmentDialog({
     handleOpenChange,
     refetch
 }: CreateDialogProps) {
+    const navigate = useNavigate()
     const form = useForm<DepartmentForm>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -71,8 +72,12 @@ export default function CreateDepartmentDialog({
         <Dialog
             open={open}
             onOpenChange={(open) => {
-                form.reset()
-                handleOpenChange(open)
+                if (goto) {
+                    navigate(goto)
+                } else {
+                    form.reset()
+                    handleOpenChange(open)
+                }
             }}
         >
             <DialogContent className='sm:max-w-md'>

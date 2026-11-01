@@ -9,9 +9,12 @@ import type {
 } from "@tanstack/react-table";
 import type { DataTableFeatures } from './table'
 import { DataTableFacetedFilter } from './facetedFilter';
+import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 type DataTableToolbarProps<TData extends RowData> = {
   table: Table<DataTableFeatures, TData>
+
   searchPlaceholder?: string
   searchKey?: string
   filters?: {
@@ -32,6 +35,21 @@ export function DataTableToolbar<TData extends RowData>({
   filters = [],
 }: DataTableToolbarProps<TData>) {
   const { columnFilters } = table.store.state
+  const [searchParam, setSearchParam] = useSearchParams()
+  const [searchValue, setSearchValue] = useState<string>(searchParam.get(searchKey ?? "term") ?? "")
+
+
+  const onSearchChange = (value: string) => {
+    setSearchValue(value)
+    if (value.length > 0) {
+      searchParam.set(searchKey ?? "term", value)
+      setSearchParam(searchParam)
+    } else {
+      searchParam.delete(searchKey ?? "term")
+      setSearchParam(searchParam)
+    }
+
+  }
 
   const isFiltered =
     columnFilters.length > 0;
@@ -40,16 +58,12 @@ export function DataTableToolbar<TData extends RowData>({
       <div className='flex flex-1 flex-col-reverse items-start gap-y-2 sm:flex-row sm:items-center sm:space-x-2'>
         {searchKey && (
           <Input
-            placeholder={searchPlaceholder}
-            value={
-              (table.getColumn(searchKey)?.getFilterValue() as string) ?? ''
-            }
-            onChange={(event) =>
-              table.getColumn(searchKey)?.setFilterValue(event.target.value)
-            }
-            className='h-8 w-37.5 lg:w-62.5'
+            placeholder={searchPlaceholder ?? "Search..."}
+            value={searchValue}
+            onChange={(event) => onSearchChange(event.target.value)}
+            className="h-8 w-37.5 lg:w-62.5"
           />
-        ) }
+        )}
         <div className='flex gap-x-2'>
           {filters.map((filter) => {
             const column = table.getColumn(filter.columnId)

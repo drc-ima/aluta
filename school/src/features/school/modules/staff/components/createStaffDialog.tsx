@@ -91,6 +91,7 @@ export default function CreateStaffDialog({
         }, {
             onSuccess: () => {
                 toast.success("New staff added successfully.")
+                form.reset()
                 if (goto) {
                     window.location.href = goto
                 } else {
@@ -426,10 +427,10 @@ export default function CreateStaffDialog({
                                                         )}
                                                     >
                                                         {field.value && selectedSchool !== null
-                                                            ? selectedSchool.staffs.map((stf: any) => {
+                                                            ? selectedSchool.staffs.map((stf) => {
                                                                 return {
                                                                     value: stf.id,
-                                                                    label: `[${stf.staff_no}] ${stf.user.first_name}${stf.user.middle_name ? stf.user.middle_name : " "}${stf.user.last_name}`
+                                                                    label: `[${stf.staff_no}] ${stf.user.full_name}`
                                                                 }
                                                             }).find(
                                                                 (stf: any) => stf.value === field.value
@@ -445,10 +446,10 @@ export default function CreateStaffDialog({
                                                     <CommandEmpty>No staff found.</CommandEmpty>
                                                     <CommandGroup>
                                                         <CommandList>
-                                                            {selectedSchool !== null && selectedSchool.staffs.map((stf: any) => {
+                                                            {selectedSchool !== null && selectedSchool.staffs.map((stf) => {
                                                                 return {
                                                                     value: stf.id,
-                                                                    label: `[${stf.staff_no}] ${stf.user.first_name}${stf.user.middle_name ? stf.user.middle_name : " "}${stf.user.last_name}`
+                                                                    label: `[${stf.staff_no}] ${stf.user.full_name}`
                                                                 }
                                                             }).map((stf: any) => (
                                                                 <CommandItem
@@ -482,7 +483,7 @@ export default function CreateStaffDialog({
                         <PositionFields form={form} />
                     </form>
                 </Form>
-                <DialogFooter className='gap-y-2 p-6 mx-auto w-full'>
+                <DialogFooter className='gap-y-2 mx-auto w-full'>
                     <DialogClose asChild>
                         <Button variant='outline'>Cancel</Button>
                     </DialogClose>

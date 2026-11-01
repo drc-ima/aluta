@@ -14,7 +14,7 @@ from shared.data.models import User, UserDefaultModule
 from shared.data.repositories.module_repository import ModuleRepository
 from shared.data.repositories.user_default_repository import UserDefaultRepository
 from shared.data.repositories.user_repository import UserRepository
-from shared.data.schemas.domain import UserDefaultModuleDomain, UserDomain
+from shared.data.schemas.domain import UserDefaultModuleDomain, UserDomain, UserInputDomain
 from shared.data.schemas.exceptions import RecordAlreadyExistsException, RecordNotFoundException
 from sqlalchemy.orm import Session
 
@@ -28,13 +28,18 @@ class UserServices:
     def login_service(self, db: Session, request: TokenRequest) -> UserDomain | None:
         try:
             with db.begin():
-                user: UserDomain | None = UserRepository().get_by_username(db, request.username)
+                user: UserInputDomain | None = UserRepository().get_by_username(db, request.username)
     
                 if user is None:
                     raise RecordNotFoundException("User", request.username)
-    
+
+                user_password_hash = UserRepository().get_user_password_hash(db, user.username)
+
+                if not user_password_hash:
+                    raise HTTPException(status_code=400, detail="User does not have password set. Click on reset password to create a password.")
+                
                 # verify password
-                if not verify_password(request.password, user.password):
+                if not verify_password(request.password, user_password_hash):
                     raise HTTPException(
                         status_code=status.HTTP_409_CONFLICT,
                         detail="User credentials did not match."
@@ -145,6 +150,30 @@ class UserServices:
                     if entity_id in existing_defaults_entity_ids:
                         continue
 
+                    # check if module has a default entity
+                    existing_default = UserDefaultRepository.get(db, user_id=user_id, entity_id=entity_id, module_id=module.id)
+
+                    # already exists, skip
+                    if existing_default:
+                        continue
+
+                    existing_module = UserDefaultRepository.get(db, user_id=user_id, module_id=module.id)
+
+                    if existing_module:
+                        updated = UserDefaultRepository.update(
+                            db,
+                            data={
+                                "entity_id": entity_id,
+                                "updated_by_id": user_id, 
+                                "updated_at": datetime.now(timezone.utc)
+                            },
+                            filters={
+                                "user_id": user_id, 
+                                "module_id": module.id, 
+                            }
+                        )
+                        continue
+
                     # create new user default module
                     new_data = UserDefaultModuleDomain(
                         user_id=user_id,
@@ -152,7 +181,6 @@ class UserServices:
                         module_id=module.id,
                         created_by_id=user_id,
                         updated_by_id=user_id,
-                        updated_at=datetime.now(timezone.utc)
                     )
 
                     news.append(new_data)

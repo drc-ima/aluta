@@ -10,20 +10,18 @@ from modules.school.schemas.responses import SchoolResponse
 from modules.school.services.academic_period import AcademicPeriodServices
 from shared.data.schemas.domain import AcademicPeriodDomain
 from shared.data.schemas.exceptions import RecordAlreadyExistsException
-from shared.utils.permissions import require_permission
+from shared.utils.permissions import school_require_permission
 from shared.data.session import get_db, get_user
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/academic-periods", tags=["Schools", "Academic Periods"])
 
 
-@router.get("/{campus_id}")
+@router.get("/{school_id}/{campus_id}")
 def campus_academic_periods(
+    school_id: uuid.UUID,
     campus_id: uuid.UUID,
     db: Session = Depends(get_db),
-    user: dict = Depends(
-        require_permission("academic_periods:read", "academic_periods:write")
-    ),
 ):
     try:
         logger.info(f"Router: Fetching academic periods for a campus")
@@ -46,21 +44,29 @@ def campus_academic_periods(
         )
 
 
-@router.post("/{campus_id}", response_model=SchoolResponse)
+@router.post("/{school_id}/{campus_id}", response_model=SchoolResponse)
 def create_campus_academic_period(
+    school_id: uuid.UUID,
     campus_id: uuid.UUID,
     body: CreateCampusAcademicPeriodRequest,
     db: Session = Depends(get_db),
-    user: dict = Depends(require_permission("academic_periods:write")),
+    user: dict = Depends(school_require_permission("academics:write")),
 ):
 
     try:
         logger.info(f"Router: Registering a school...")
 
-        AcademicPeriodServices.add_academic_periods(db, campus_id, body, user)
+        AcademicPeriodServices.add_academic_periods(db, campus_id, school_id, body, user)
 
         return SchoolResponse(
-            message="New academic period created", school_id=body.school_id
+            message="New academic period created", school_id=school_id
         )
-    except:
-        pass
+    except HTTPException as e:
+        logger.error(f"Router: HTTP error creating academic period - {e.detail}")
+        raise e
+    except Exception as e:
+        logger.error(f"Router: Unexpected error creating academic period - {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed  creating academic period: {str(e)}"
+        )
+    

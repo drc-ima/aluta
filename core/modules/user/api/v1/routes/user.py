@@ -113,7 +113,6 @@ def user_schools_campuses(
         )
 
 
-
 @router.get(
     "/defaults",
     status_code=200

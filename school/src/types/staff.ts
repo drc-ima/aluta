@@ -7,6 +7,7 @@ export type StaffT = {
     parent: StaffT | null
     photosUrl?: string | null
     user: UserT
+    
     staff_campuses: StaffCampusT[]
     school_id: string
     school: SchoolT
@@ -24,6 +25,7 @@ export type UserT = {
     verified: boolean
     username: string
     user_type: string
+    full_name: string
 }
 
 export type StaffCampusT = {

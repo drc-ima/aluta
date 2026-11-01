@@ -24,7 +24,7 @@ const router = createBrowserRouter([
         ]
     },
     {
-        element: <UserDefaultsProvider><LayoutProvider><Layout /></LayoutProvider></UserDefaultsProvider>,
+        element: <LayoutProvider><UserDefaultsProvider><Layout /></UserDefaultsProvider></LayoutProvider>,
         children: [
             {
                 path: "/overview",

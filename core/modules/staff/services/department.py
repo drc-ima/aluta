@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Any
 import uuid
 
 from sqlalchemy.orm import Session
@@ -13,7 +14,7 @@ from shared.data.schemas.domain import DepartmentDomain
 class DepartmentServices:
 
     @exception_catcher
-    def get_school_departments(db: Session, school_id: uuid.UUID) -> list[DepartmentDomain]:
+    def get_school_departments(db: Session, school_id: uuid.UUID) -> list[dict[str, Any]]:
 
         departments: list[DepartmentDomain] = DepartmentRepository.filter(db, school_id=school_id)
 
@@ -33,13 +34,12 @@ class DepartmentServices:
                     updated_by_id=created_by_id,
                     created_at=datetime.now(timezone.utc),
                     updated_at=datetime.now(timezone.utc)
-                    
                 )
                 department = DepartmentRepository.create(db, data)
 
                 return department
         except Exception as e:
-            logger.error(f"Service: Error creatomg academic period: {e}")
+            logger.error(f"Service: Error creating department: {e}")
             db.rollback()
             raise
         finally:

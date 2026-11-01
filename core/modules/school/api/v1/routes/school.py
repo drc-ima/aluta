@@ -77,7 +77,7 @@ def register(
         
         school_name = registration.name
         member_type = "Staff"
-        full_name = user.full_name()
+        full_name = user.full_name
 
         # send school verification email
         school_email_text = email_sender.body_context(school_message.get("text"), verification_link=build_verification_url(token=school_verify_token), school_name=school_name)
@@ -107,6 +107,7 @@ def register(
         logger.error(f"Router: User already exists - {e.detail}")
         raise e
     except HTTPException as e:
+        print(e)
         logger.error(f"Router: HTTP error registering school - {e.detail}")
         raise e
     except Exception as e:

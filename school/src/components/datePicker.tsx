@@ -7,20 +7,28 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { toDateString } from '@/libs/utils'
 
 type DatePickerProps = {
-  selected: Date | undefined
-  onSelect: (date: Date | undefined) => void
+  selected: string | undefined
+  onSelect: (date: string| undefined) => void
   placeholder?: string,
-  disabled?: boolean
+  disabled?: boolean,
+  minDate?: Date,
+  maxDate?: Date
 }
 
 export function DatePicker({
   selected,
   onSelect,
   placeholder = 'Pick a date',
-  disabled
+  disabled,
+  minDate,
+  maxDate
 }: DatePickerProps) {
+  const _min = minDate || new Date('1900-01-01')
+
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -42,11 +50,19 @@ export function DatePicker({
         <Calendar
           mode='single'
           captionLayout='dropdown'
-          selected={selected}
-          onSelect={onSelect}
-          disabled={(date: Date) =>
-            date > new Date() || date < new Date('1900-01-01')
-          }
+          selected={selected ? new Date(`${selected}T12:00:00`) : undefined}
+          onSelect={(selectedDate) => {
+            const date = toDateString(selectedDate)
+            onSelect(date)
+          }}
+          disabled={(date: Date) => {
+            if (maxDate) {
+              return date > _min || date < maxDate
+            } else {
+              return date < _min
+            }
+          }}
+        // date > new Date() || date < new Date('1900-01-01')
         />
       </PopoverContent>
     </Popover>

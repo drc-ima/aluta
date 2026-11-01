@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from encodings.punycode import T
 from enum import Enum
 import json
@@ -18,7 +18,7 @@ def build_tree(
 
     for item in items:
         parent_id = get_parent_id(item)
-        items_by_parent.setdefault(parent_id, []).append(item)
+        items_by_parent.setdefault(parent_id, []).append(item.to_pydantic())
         
         
 
@@ -113,9 +113,7 @@ class UserDomain(AuditSchemaMixin, BaseModel):
     # staffs: list["StaffDomain"] = Field(default_factory=list)
     defaults: list["UserDefaultModuleDomain"] = Field(default_factory=list)
 
-    @property
-    def full_name(self) -> str:
-        return f"{self.first_name}{' ' + self.middle_name + ' ' if self.middle_name else ' '}{self.last_name}"
+    full_name: Optional[str] = None
 
 class RoleDomain(AuditSchemaMixin, BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -178,9 +176,9 @@ class SchoolDomain(AuditSchemaMixin, BaseModel):
     slug: Optional[str] = None
 
     roles: list[RoleDomain] = Field(default_factory=list)
-    # positions: list["PositionDomain"] = Field(default_factory=list)
-    # staffs: list["StaffDomain"] = Field(default_factory=list)
-    # departments: list["DepartmentDomain"] = Field(default_factory=list)
+    positions: list["PositionDomain"] = Field(default_factory=list)
+    staffs: list["StaffDomain"] = Field(default_factory=list)
+    departments: list["DepartmentDomain"] = Field(default_factory=list)
     modules: list["SchoolModuleDomain"] = Field(default_factory=list)
     campuses: list["CampusDomain"] = Field(default_factory=list)
 
@@ -232,6 +230,7 @@ class StaffDomain(AuditSchemaMixin, BaseModel):
     school_id: uuid.UUID
     active: Optional[bool] = False
     parent_id: Optional[uuid.UUID] = None
+    employment_date: Optional[datetime] = None
 
     user: Optional[UserDomain] = None
     # school: Optional[SchoolDomain] = None
@@ -329,12 +328,15 @@ class AcademicPeriodDomain(AuditSchemaMixin, BaseModel):
 
     school_id: uuid.UUID
     name: str
-    start_date: datetime
-    end_date: datetime
+    start_date: date
+    end_date: date
     parent_id: Optional[uuid.UUID] = None
     campus_id: Optional[uuid.UUID] = None
-
+    days: Optional[int] = 1
+    weeks: Optional[int] = 1
     parent: Optional["AcademicPeriodDomain"] = None
+    today_year: Optional[bool] = False
+    today_term: Optional[bool] = False
     # children: list["AcademicPeriodDomain"] = Field(default_factory=list)
 
 class UserDefaultModuleDomain(AuditSchemaMixin, BaseModel):
@@ -346,7 +348,140 @@ class UserDefaultModuleDomain(AuditSchemaMixin, BaseModel):
 
     module: Optional[ModuleDomain] = None
 
-class PhotoDomain(AuditSchemaMixin, BaseModel):
+class MediaDomain(AuditSchemaMixin, BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     entity_id: uuid.UUID
     blob_url: str
-    metadata: Optional[str] = None
+    media_type: str
+    metadatas: Optional[str] = None
+
+
+class CourseDomain(AuditSchemaMixin, BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    name: str
+    code: str
+    description: Optional[str] = None
+    is_active: bool
+    department_id: Optional[uuid.UUID] = None
+    school_id: uuid.UUID
+    classes: list["ClassroomCourseStaffDomain"] = Field(default_factory=list)
+    department: Optional[DepartmentDomain] = None
+
+
+class ClassroomCourseStaffDomain(AuditSchemaMixin, BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    class_id: uuid.UUID
+    course_id: uuid.UUID
+    staff_id: uuid.UUID
+    academic_period_id: uuid.UUID
+
+
+class SchoolClassDomain(AuditSchemaMixin, BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    school_id: uuid.UUID
+    campus_id: uuid.UUID
+    name: str
+    code: str
+    level: str
+    section: Optional[str] = None
+    description: Optional[str] = None
+    capacity: Optional[int] = None
+    active: bool
+
+
+class ClassStaffAssignmentDomain(AuditSchemaMixin, BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    class_id: uuid.UUID
+    staff_id: uuid.UUID
+    academic_period_id: uuid.UUID
+
+
+class StudentGender(str, Enum):
+    Male = "MALE"
+    Female = "FEMALE"
+
+
+class StudentDomain(AuditSchemaMixin, BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    first_name: str
+    middle_name: Optional[str] = None
+    last_name: str
+    date_of_birth: date
+    gender: StudentGender
+    admission_date: Optional[date] = None
+    admission_number: str
+    
+    school_id: uuid.UUID
+    campus_id: Optional[uuid.UUID] = None
+    
+    campus: Optional["CampusDomain"] = None
+    school: Optional["SchoolDomain"] = None
+    
+    guardians: list["StudentGuardianDomain"] = Field(default_factory=list)
+    
+    enrollments: list["EnrollmentDomain"] = Field(default_factory=list)
+
+
+class GuardianDomain(AuditSchemaMixin, BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    school_id: uuid.UUID
+
+    first_name: str
+    last_name: str
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    school: Optional["SchoolDomain"] = None
+    students: list["StudentGuardianDomain"] = Field(default_factory=list)
+
+
+class StudentGuardianDomain(AuditSchemaMixin, BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    student_id: uuid.UUID
+    guardian_id: Optional[uuid.UUID] = None
+
+    relationship_type: str
+    is_primary_contact: bool = False
+    can_collect: bool = False
+    receives_updates: bool = True
+
+    student: Optional["StudentDomain"] =None
+    guardian: Optional["GuardianDomain"] = None
+
+
+class ClassroomDomain(AuditSchemaMixin, BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    school_class_id: uuid.UUID
+    academic_period_id: uuid.UUID
+
+    academic_period: Optional["AcademicPeriodDomain"] = None
+    school_class: Optional[SchoolClassDomain] = None
+
+class EnrollmentDomain(AuditSchemaMixin, BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    student_id: uuid.UUID
+    classroom_id: uuid.UUID
+
+    enrolled_at: date
+    left_at: Optional[date] = None
+
+    student: Optional["StudentDomain"] = None
+    classroom: Optional["ClassroomDomain"] = None
+    statuses: list["EnrollmentStatusDomain"] = Field(default_factory=list)
+
+
+class EnrollmentStatusDomain(AuditSchemaMixin, BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    enrollment_id: uuid.UUID
+    name: str
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+
+    enrollment: Optional[EnrollmentDomain] = None

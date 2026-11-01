@@ -98,11 +98,12 @@ async def add_request_id_and_elapsed_time(request: Request, call_next):
     if request.query_params:
         params["query"] = dict(request.query_params)
 
-    # try:
-    #     if request.method in ["POST", "PUT", "PATCH"]:
-    #         params["body"] = await request.json()
-    # except Exception:
-    #     pass
+    try:
+        if request.method in ["POST", "PUT", "PATCH"]:
+            
+            params["body"] = await request.json()
+    except Exception as e:
+        logger.error(f"Post data error: {e}")
 
     try:
         if request.headers.get("content-type", "").startswith("multipart/form-data"):

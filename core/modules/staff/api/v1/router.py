@@ -1,5 +1,9 @@
 from fastapi import APIRouter
-from modules.staff.api.v1.routes import department, position, staff
+from modules.staff.api.v1.routes import (
+    department, 
+    position, 
+    staff
+)
 
 staff_router = APIRouter()
 

@@ -1,26 +1,37 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import uuid
 from middlewares.context.password import pwd_context
-from sqlalchemy import UUID, Boolean, Date, DateTime, ForeignKey, Integer, String, UniqueConstraint, func, text
+from sqlalchemy import UUID, Boolean, Date, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func, text
 from sqlalchemy.orm import mapped_column, relationship, Mapped, declared_attr, deferred, configure_mappers
 from shared.data.schemas.domain import (
     EMPLOYMENT_TYPE,
     AcademicPeriodDomain,
     CampusContactDomain,
     CampusDomain,
+    ClassroomCourseStaffDomain,
+    ClassStaffAssignmentDomain,
+    ClassroomDomain,
     ContactType,
+    CourseDomain,
     DepartmentDomain,
+    EnrollmentDomain,
+    EnrollmentStatusDomain,
+    GuardianDomain,
+    MediaDomain,
     PermissionDomain,
-    PhotoDomain,
     PositionDomain,
     RoleDomain,
     RolePermissionDomain,
+    SchoolClassDomain,
     SchoolDomain,
     StaffCampusDomain,
     StaffContactDomain,
     StaffDepartmentDomain,
     StaffDomain,
     StaffPositionDomain,
+    StudentDomain,
+    StudentGender,
+    StudentGuardianDomain,
     UserDefaultModuleDomain,
     UserPermissionDomain,
     UserRoleDomain,
@@ -236,6 +247,11 @@ class School(AuditMixin, Base):
     departments: Mapped[list["Department"]] = relationship(back_populates="school", foreign_keys="[Department.school_id]")
     modules: Mapped[list["SchoolModule"]] = relationship(back_populates="school", foreign_keys="[SchoolModule.school_id]")
     campuses: Mapped[list["Campus"]] = relationship(back_populates="school", foreign_keys="[Campus.school_id]")
+    courses: Mapped[list["Course"]] = relationship(back_populates="school", foreign_keys="[Course.school_id]")
+    classes: Mapped[list["SchoolClass"]] = relationship(back_populates="school")
+    students: Mapped[list["Student"]] = relationship(back_populates="school")
+    guardians: Mapped[list["Guardian"]] = relationship(back_populates="school")
+    
     def to_pydantic(self):
         return SchoolDomain.model_validate(self)
 
@@ -253,6 +269,9 @@ class Campus(AuditMixin, Base):
     contacts: Mapped[list["CampusContact"]] = relationship(back_populates="campus", foreign_keys="[CampusContact.campus_id]")
     staffs: Mapped[list["StaffCampus"]] = relationship(back_populates="campus", foreign_keys="[StaffCampus.campus_id]")
     school: Mapped[School] = relationship(back_populates="campuses", foreign_keys="[Campus.school_id]")
+    classes: Mapped[list["SchoolClass"]] = relationship(back_populates="campus")
+    students: Mapped[list["Student"]] = relationship(back_populates="campus")
+    
     def to_pydantic(self):
         return CampusDomain.model_validate(self)
 
@@ -272,7 +291,7 @@ class CampusContact(AuditMixin, Base):
 
 class Staff(AuditMixin, Base):
     __tablename__ = "staff"
-    __tabe_args__ = (
+    __table_args__ = (
         UniqueConstraint("school_id", "staff_no"),
     )
 
@@ -281,6 +300,7 @@ class Staff(AuditMixin, Base):
     school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("school.id", ondelete="CASCADE"))
     parent_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("staff.id", ondelete="SET NULL"), nullable=True)
     active: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    employment_date: Mapped[datetime] = mapped_column(Date, nullable=True)
     
     user: Mapped[User] = relationship(back_populates="staffs", foreign_keys="[Staff.user_id]")
     school: Mapped[School] = relationship(back_populates="staffs", foreign_keys="[Staff.school_id]")
@@ -299,6 +319,8 @@ class Staff(AuditMixin, Base):
     staff_positions: Mapped[list["StaffPosition"]] = relationship(back_populates="staff", foreign_keys="[StaffPosition.staff_id]")
     staff_campuses: Mapped[list["StaffCampus"]] = relationship(back_populates="staff", foreign_keys="[StaffCampus.staff_id]")
     staff_departments: Mapped[list["StaffDepartment"]] = relationship(back_populates="staff", foreign_keys="[StaffDepartment.staff_id]")
+    classroom_assignments: Mapped[list["ClassroomStaffAssignment"]] = relationship(back_populates="staff")
+    staff_classrooms: Mapped[list["ClassroomCourseStaff"]] = relationship(back_populates="staff")
 
     def to_pydantic(self):
         return StaffDomain.model_validate(self)
@@ -369,7 +391,8 @@ class Department(AuditMixin, Base):
 
     school: Mapped[School] = relationship(back_populates="departments", foreign_keys="[Department.school_id]")
     department_staffs: Mapped[list["StaffDepartment"]] = relationship(back_populates="department", foreign_keys="[StaffDepartment.department_id]")
-
+    courses: Mapped[list["Course"]] = relationship(back_populates="department", foreign_keys="[Course.department_id]")
+    
     def to_pydantic(self):
         return DepartmentDomain.model_validate(self)
 
@@ -421,8 +444,8 @@ class AcademicPeriod(AuditMixin, Base):
 
     school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("school.id", ondelete="CASCADE"))
     name: Mapped[str] = mapped_column(String, index=True)
-    start_date: Mapped[datetime] = mapped_column(DateTime)
-    end_date: Mapped[datetime] = mapped_column(DateTime)
+    start_date: Mapped[date] = mapped_column(Date)
+    end_date: Mapped[date] = mapped_column(Date)
     parent_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("academic_period.id", ondelete="SET NULL"), nullable=True)
     campus_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("campus.id", ondelete="SET NULL"), nullable=True)
 
@@ -439,9 +462,43 @@ class AcademicPeriod(AuditMixin, Base):
         foreign_keys=[parent_id],
         passive_deletes=True,
     )
+    classroom_staff_assigments: Mapped[list["ClassroomStaffAssignment"]] = relationship(back_populates="academic_period")
+    classrooms: Mapped[list["Classroom"]] = relationship(back_populates="academic_period")
+    classroom_course_staffs: Mapped[list["ClassroomCourseStaff"]] = relationship(back_populates="academic_period")
 
     def to_pydantic(self):
         return AcademicPeriodDomain.model_validate(self)
+
+    @property
+    def weeks(self):
+        total_weeks = self.days // 7
+
+        return total_weeks
+
+    @property
+    def days(self):
+        return abs((self.start_date - self.end_date).days)
+
+    @property
+    def today_year(self):
+        if self.parent_id:
+            return False
+        
+        today = datetime.now().date()
+
+        low, high = min(self.start_date, self.end_date), max(self.start_date, self.end_date)
+
+        return low <= today <= high
+
+    @property
+    def today_term(self):
+        if not self.parent_id:
+            return False
+        today = datetime.now().date()
+
+        low, high = min(self.start_date, self.end_date), max(self.start_date, self.end_date)
+
+        return low <= today <= high
 
 class UserDefaultModule(AuditMixin, Base):
     __tablename__ = "user_default_module"
@@ -456,12 +513,339 @@ class UserDefaultModule(AuditMixin, Base):
     def to_pydantic(self):
         return UserDefaultModuleDomain.model_validate(self)
 
-class Photo(AuditMixin, Base):
-    __tablename__ = "photo"
+class Media(AuditMixin, Base):
+    __tablename__ = "media"
 
     entity_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
     blob_url: Mapped[str] = mapped_column(String, nullable=False)
-    metadata: Mapped[str] = mapped_column(String, nullable=True)
+    media_type: Mapped[str] = mapped_column(String)
+    metadatas: Mapped[str] = mapped_column(String, nullable=True)
 
     def to_pydantic(self):
-        return PhotoDomain.mode_validate(self)
+        return MediaDomain.model_validate(self)
+
+
+class Course(AuditMixin, Base):
+    __tablename__ = "course"
+    __table_args__ = (
+        UniqueConstraint("school_id", "code"),
+    )
+
+    name: Mapped[str] = mapped_column(String)
+    code: Mapped[str] = mapped_column(String)
+    description: Mapped[str] = mapped_column(Text, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, server_default="1", default=True)
+    department_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("department.id", ondelete="SET NULL"), nullable=True)
+    school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("school.id", ondelete="CASCADE"))
+
+    department: Mapped[Department] = relationship(back_populates="courses", foreign_keys="[Course.department_id]")
+    school: Mapped[School] = relationship(back_populates="courses", foreign_keys="[Course.school_id]")
+    staffs: Mapped[list["ClassroomCourseStaff"]] = relationship(back_populates="course", foreign_keys="[ClassroomCourseStaff.course_id]")
+
+    def to_pydantic(self):
+        return CourseDomain.model_validate(self)
+
+
+class ClassroomCourseStaff(AuditMixin, Base):
+    __tablename__ = "classroom_course_staff"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "classroom_id",
+            "course_id",
+            "academic_period_id",
+            name="uq_classroom_course_period",
+        ),
+    )
+
+    classroom_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("classroom.id"),
+        nullable=False,
+        index=True,
+    )
+
+    course_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("course.id"),
+        nullable=False,
+        index=True,
+    )
+
+    staff_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("staff.id"),
+        nullable=False,
+        index=True,
+    )
+
+    academic_period_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("academic_period.id"),
+        nullable=False,
+        index=True,
+    )
+
+    course: Mapped[Course] = relationship(back_populates="staffs", foreign_keys="[ClassroomCourseStaff.course_id]")
+    classroom: Mapped["Classroom"] = relationship(back_populates="courses", foreign_keys="[ClassroomCourseStaff.classroom_id]")
+    academic_period: Mapped["AcademicPeriod"] = relationship(back_populates="classroom_course_staffs", foreign_keys="[ClassroomCourseStaff.academic_period_id]")
+    staff: Mapped["Staff"] = relationship(back_populates="staff_classrooms", foreign_keys="[ClassroomCourseStaff.staff_id]")
+
+    def to_pydantic(self):
+        return ClassroomCourseStaffDomain.model_validate(self)
+
+class SchoolClass(AuditMixin, Base):
+    __tablename__ = "school_class"
+
+    school_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("school.id", ondelete="CASCADE"), index=True)
+    campus_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("campus.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    code: Mapped[str] = mapped_column(String(50), nullable=False)
+
+    level: Mapped[str] = mapped_column(String(50), nullable=False)
+    section: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True,
+    )
+
+    description: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    capacity: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+    active: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        nullable=False,
+    )
+    school: Mapped[School] = relationship(back_populates="classes", foreign_keys="[SchoolClass.school_id]")
+    campus: Mapped[Campus] = relationship(back_populates="classes", foreign_keys="[SchoolClass.campus_id]")
+    classrooms: Mapped[list["Classroom"]] = relationship(back_populates="school_class")
+
+    def to_pydantic(self):
+        return SchoolClassDomain.model_validate(self)
+
+
+class ClassroomStaffAssignment(AuditMixin, Base):
+    __tablename__ = "classroom_staff_assignment"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "classroom_id",
+            "academic_period_id",
+            name="uq_class_teacher_assignment_period",
+        ),
+    )
+
+    classroom_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("classroom.id"),
+        nullable=False,
+        index=True,
+    )
+
+    staff_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("staff.id"),
+        nullable=False,
+        index=True,
+    )
+
+    academic_period_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("academic_period.id"),
+        nullable=False,
+        index=True,
+    )
+
+    classroom: Mapped["Classroom"] = relationship(back_populates="staff_assignments", foreign_keys="[ClassroomStaffAssignment.classroom_id]")
+    staff: Mapped[Staff] = relationship(back_populates="classroom_assignments", foreign_keys="[ClassroomStaffAssignment.staff_id]")
+    academic_period: Mapped[AcademicPeriod] = relationship(back_populates="classroom_staff_assigments", foreign_keys="[ClassroomStaffAssignment.academic_period_id]")
+
+    def to_pydantic(self):
+        return ClassStaffAssignmentDomain.model_validate(self)
+
+
+class Student(AuditMixin, Base):
+    __tablename__ = "student"
+
+    first_name: Mapped[str] = mapped_column(String)
+    middle_name: Mapped[str] = mapped_column(String, nullable=True)
+    last_name: Mapped[str] = mapped_column(String)
+    date_of_birth: Mapped[date] = mapped_column(Date)
+    gender: Mapped[StudentGender] = mapped_column(String(20), nullable=True)
+    admission_date: Mapped[date] = mapped_column(Date, nullable=True)
+    admission_number: Mapped[str] = mapped_column(String(50), nullable=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+
+    school_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("school.id", ondelete="CASCADE"), index=True)
+    campus_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("campus.id", ondelete="SET NULL"), index=True, nullable=True)
+
+    campus: Mapped["Campus"] = relationship(
+        back_populates="students"
+    )
+    school: Mapped["School"] = relationship(
+        back_populates="students"
+    )
+
+    guardians: Mapped[list["StudentGuardian"]] = relationship(
+        back_populates="student"
+    )
+
+    enrollments: Mapped[list["Enrollment"]] = relationship(
+        back_populates="student"
+    )
+
+    def to_pydantic(self):
+        return StudentDomain.model_validate(self)
+
+
+class Guardian(AuditMixin, Base):
+    __tablename__ = "guardian"
+
+    school_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("school.id", ondelete="CASCADE"),
+        index=True,
+    )
+
+    first_name: Mapped[str] = mapped_column(String(100))
+    last_name: Mapped[str] = mapped_column(String(100))
+    phone: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+
+    school: Mapped["School"] = relationship(
+        back_populates="guardians"
+    )
+    students: Mapped[list["StudentGuardian"]] = relationship(
+        back_populates="guardian"
+    )
+
+    def to_pydantic(self):
+        return GuardianDomain.model_validate(self)
+
+
+class StudentGuardian(AuditMixin, Base):
+    """Association object carrying details about the relationship."""
+
+    __tablename__ = "student_guardian"
+    __table_args__ = (
+        UniqueConstraint(
+            "student_id",
+            "guardian_id",
+            name="uq_student_guardian",
+        ),
+    )
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("student.id", ondelete="CASCADE"),
+        index=True,
+    )
+    guardian_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("guardian.id", ondelete="SET NULL"),
+        index=True,
+        nullable=True
+    )
+
+    relationship_type: Mapped[str] = mapped_column(
+        String(30)
+    )  # mother, father, carer, etc.
+
+    is_primary_contact: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+    )
+    can_collect: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+    )
+    receives_updates: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+    )
+
+    student: Mapped["Student"] = relationship(
+        back_populates="guardians"
+    )
+    guardian: Mapped["Guardian"] = relationship(
+        back_populates="students"
+    )
+
+    def to_pydantic(self):
+        return StudentGuardianDomain.model_validate(self)
+
+
+class Classroom(AuditMixin, Base):
+    __tablename__ = "classroom"
+    __table_args__ = (
+        UniqueConstraint(
+            "academic_period_id",
+            "school_class_id",
+            name="uq_classroom_school_class",
+        ),
+    )
+
+    school_class_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("school_class.id", ondelete="CASCADE"))
+    academic_period_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("academic_period.id", ondelete="CASCADE"),
+        index=True,
+    )
+
+    academic_period: Mapped["AcademicPeriod"] = relationship(
+        back_populates="classrooms"
+    )
+    school_class: Mapped[SchoolClass] = relationship(back_populates="classrooms", foreign_keys="[Classroom.school_class_id]")
+    staff_assignments: Mapped[list[ClassroomStaffAssignment]] = relationship(back_populates="classroom")
+    courses: Mapped[list[ClassroomCourseStaff]] = relationship(back_populates="classroom")
+    enrollments: Mapped[list["Enrollment"]] = relationship(back_populates="classroom")
+
+    def to_pydantic(self):
+        return ClassroomDomain.model_validate(self)
+
+
+class Enrollment(AuditMixin, Base):
+    """A student's placement in a classroom."""
+
+    __tablename__ = "enrollment"
+
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("student.id"),
+        index=True,
+    )
+    classroom_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("classroom.id"),
+        index=True,
+    )
+
+    enrolled_at: Mapped[date] = mapped_column(Date)
+    left_at: Mapped[date | None] = mapped_column(Date, nullable=True)
+
+    student: Mapped["Student"] = relationship(
+        back_populates="enrollments"
+    )
+    classroom: Mapped["Classroom"] = relationship(
+        back_populates="enrollments"
+    )
+    statuses: Mapped[list["EnrollmentStatus"]] = relationship(
+        back_populates="enrollment", foreign_keys="[EnrollmentStatus.enrollment_id]"
+    )
+
+    def to_pydantic(self):
+        return EnrollmentDomain.model_validate(self)
+
+
+class EnrollmentStatus(AuditMixin, Base):
+    __tablename__ = "enrollment_status"
+
+    enrollment_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("enrollment.id", ondelete="CASCADE"),
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(
+        String
+    )
+    start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+
+    enrollment: Mapped[Enrollment] = relationship(
+        back_populates="statuses", foreign_keys="[EnrollmentStatus.enrollment_id]"
+    )
+
+    def to_pydantic(self):
+        return EnrollmentStatusDomain.model_validate(self)

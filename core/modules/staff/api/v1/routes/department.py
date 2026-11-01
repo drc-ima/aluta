@@ -44,6 +44,7 @@ def school_departments(
 
 @router.post(
     "/{school_id}",
+    status_code=201,
     response_model=SchoolResponse
 )
 def create_school_department(
@@ -56,7 +57,7 @@ def create_school_department(
 ): 
 
     try:
-        logger.info(f"Router: Fetching academic periods for a campus")
+        logger.info(f"Router: Creating school department")
 
         DepartmentServices.add_school_department(db, body, school_id)
 

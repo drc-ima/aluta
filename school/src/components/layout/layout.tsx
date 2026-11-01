@@ -12,6 +12,7 @@ import { ThemeSwitch } from "../themeSwitch";
 import { SidebarContents } from "./sidebarContents";
 import { TopNav } from "./topNav";
 import { useLayout } from "@/contexts/layoutProvider";
+import { AcademicYearSwitcher } from "../academicYearSwitcher";
 
 
 
@@ -48,6 +49,7 @@ export function Layout({ children }: { children?: React.ReactNode }) {
           <div className='flex min-h-0 flex-1 flex-col'>
             <Header fixed>
               <TopNav links={navLinks} className='me-auto' />
+              <AcademicYearSwitcher />
               <ThemeSwitch />
               <ProfileDropdown />
             </Header>

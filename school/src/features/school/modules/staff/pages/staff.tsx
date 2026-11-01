@@ -3,7 +3,6 @@ import { DataTable, type DataTableFeatures } from "@/components/dataTable/table"
 import { Checkbox } from "@/components/ui/checkbox";
 import { LongText } from "@/components/ui/longText";
 import { PageWrapper } from "@/features/school/components";
-import { cn } from "@/libs/utils";
 import type { StaffT } from "@/types/staff";
 import type { ColumnDef, Row } from "@tanstack/react-table";
 import { useSearchParams } from "react-router-dom";
@@ -13,19 +12,60 @@ import { useUserDefaultsProvider } from "@/contexts/userDefaultProvider";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuTrigger } from "@/components/ui/dropdownMenu";
 import { Button } from "@/components/ui/button";
 import { DotsHorizontalIcon } from "@radix-ui/react-icons";
-import { Trash2, UserIcon, UserPen } from "lucide-react";
+import { UserIcon, UserPen } from "lucide-react";
+import { useTableUrlState } from "@/hooks/useTableUrlState";
 
 
 export default function Staff() {
     const [searchParams, setSearchParams] = useSearchParams()
     const { selectedSchool } = useUserDefaultsProvider()
 
+    const filterConfig = [
+        {
+            columnId: "department",
+            searchKey: "department",
+            type: "array" as const
+        },
+        {
+            columnId: "location",
+            searchKey: "location",
+            type: "array" as const
+        }
+    ]
+    const tableState = useTableUrlState({
+        search: {},
+        searchKey: "search",
+        pagination: {
+            defaultPage: 1,
+            defaultPageSize: 20,
+            pageKey: "page",
+            pageSizeKey: "limit",
+        },
+        sorting: {
+            sortByKey: "sortBy",
+            sortOrderKey: "sortOrder",
+            defaultSortBy: "id",
+            defaultSortOrder: "asc",
+        },
+        columnFilters: filterConfig,
+    });
     const {
         isLoading: loading,
         data: staffs,
         refetch
-    } = useSchoolStaffs({ school_id: selectedSchool !== null ? selectedSchool?.id : "", enabled: selectedSchool !== null})
+    } = useSchoolStaffs({
+        school_id: selectedSchool !== null ? selectedSchool?.id : "",
+        params: {
+            page: tableState.pagination.pageIndex + 1,
+            limit: tableState.pagination.pageSize,
+            search: searchParams.get("search") ?? "",
+            filters: tableState.columnFilters,
+            sorting: tableState.sorting
+        }
 
+    })
+
+    const search = Object.fromEntries(searchParams.entries());
     return (
         <PageWrapper
             title="Staff"
@@ -43,10 +83,35 @@ export default function Staff() {
         >
             <DataTable
                 data={staffs !== undefined ? staffs.items : []}
+                totalRows={staffs !== undefined ? staffs.total : 0}
+                search={search}
                 columns={staffColumns}
-                filters={[]}
-                searchKey="staffNo"
+                filters={filterConfig}
+                searchKey="search"
+                loading={loading}
                 searchPlaceholder="Search by staff name"
+                filterOptions={[
+                    {
+                        columnId: "department",
+                        title: "Department",
+                        options: selectedSchool !== null ? selectedSchool.departments.map(dep => {
+                            return {
+                                label: dep.name,
+                                value: dep.id
+                            }
+                        }) : []
+                    },
+                    {
+                        columnId: "location",
+                        title: "Location",
+                        options: selectedSchool !== null ? selectedSchool.campuses.map(camp => {
+                            return {
+                                label: camp.name,
+                                value: camp.id
+                            }
+                        }) : []
+                    }
+                ]}
             />
             <CreateStaffDialog
                 handleOpenChange={(open) => {
@@ -98,7 +163,7 @@ const staffColumns: ColumnDef<DataTableFeatures, StaffT>[] = [
         cell: ({ row }) => {
             const staffNo = row.original.staff_no;
             return <LongText className='max-w-36 ps-3'>{staffNo}</LongText>
-    },
+        },
         // meta: {
         //     className: cn(
         //         'drop-shadow-[0_1px_2px_rgb(0_0_0_/_0.1)] dark:drop-shadow-[0_1px_2px_rgb(255_255_255_/_0.1)]',
@@ -106,6 +171,7 @@ const staffColumns: ColumnDef<DataTableFeatures, StaffT>[] = [
         //     ),
         // },
         enableHiding: false,
+        enableSorting: false
     },
     {
         id: 'fullName',
@@ -114,12 +180,12 @@ const staffColumns: ColumnDef<DataTableFeatures, StaffT>[] = [
             <DataTableColumnHeader column={column} title='Full Name' />
         ),
         cell: ({ row }) => {
-            const { first_name, last_name, middle_name } = row.original.user
-            const fullName = `${first_name}${middle_name ? " " + middle_name : ""} ${last_name}`
-            return <LongText className='max-w-36'>{fullName}</LongText>
+            const { full_name } = row.original.user
+            return <LongText className='max-w-36'>{full_name}</LongText>
         },
         // meta: { className: 'w-36' },
-        enableHiding: false
+        enableHiding: false,
+        enableSorting: false
     },
     {
         id: 'department',
@@ -141,7 +207,8 @@ const staffColumns: ColumnDef<DataTableFeatures, StaffT>[] = [
         filterFn: (row, id, value) => {
             console.log(row, id, value)
             return value.includes(row.getValue(id))
-        }
+        },
+        enableSorting: false
     },
     {
         id: 'lineManager',
@@ -159,6 +226,7 @@ const staffColumns: ColumnDef<DataTableFeatures, StaffT>[] = [
             const fullName = `${first_name}${middle_name ? " " + middle_name : ""} ${last_name}`
             return <LongText className='max-w-36'>{fullName}</LongText>
         },
+        enableSorting: false
         // meta: { className: 'w-36' },
     },
     {
@@ -176,6 +244,7 @@ const staffColumns: ColumnDef<DataTableFeatures, StaffT>[] = [
             const { name } = campuses[0].campus
             return <LongText className='max-w-36'>{name}</LongText>
         },
+        enableSorting: false
         // meta: { className: 'w-36' },
     },
     {
@@ -193,6 +262,7 @@ const staffColumns: ColumnDef<DataTableFeatures, StaffT>[] = [
             const topPosition = positions[0].position.name
             return <LongText className='max-w-36'>{topPosition}</LongText>
         },
+        enableSorting: false
         // meta: { className: 'w-36' },
     },
     {
@@ -201,45 +271,45 @@ const staffColumns: ColumnDef<DataTableFeatures, StaffT>[] = [
     }
 ]
 
-function DataTableRowActions({ row }: {row: Row<DataTableFeatures, StaffT>}) {
+function DataTableRowActions({ row }: { row: Row<DataTableFeatures, StaffT> }) {
 
-  return (
-    <>
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant='ghost'
-            className='flex h-8 w-8 p-0 data-[state=open]:bg-muted'
-          >
-            <DotsHorizontalIcon className='h-4 w-4' />
-            <span className='sr-only'>Open menu</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align='end' className='w-40'>
-          <DropdownMenuItem
-            onClick={() => {
-              
-            }}
-          >
-            Details
-            <DropdownMenuShortcut>
-              <UserIcon size={16} />
-            </DropdownMenuShortcut>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => {
-              
-            }}
-            
-          >
-            Edit
-            <DropdownMenuShortcut>
-              <UserPen size={16} />
-            </DropdownMenuShortcut>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
-  )
+    return (
+        <>
+            <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                    <Button
+                        variant='ghost'
+                        className='flex h-8 w-8 p-0 data-[state=open]:bg-muted'
+                    >
+                        <DotsHorizontalIcon className='h-4 w-4' />
+                        <span className='sr-only'>Open menu</span>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end' className='w-40'>
+                    <DropdownMenuItem
+                        onClick={() => {
+
+                        }}
+                    >
+                        Details
+                        <DropdownMenuShortcut>
+                            <UserIcon size={16} />
+                        </DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                        onClick={() => {
+
+                        }}
+
+                    >
+                        Edit
+                        <DropdownMenuShortcut>
+                            <UserPen size={16} />
+                        </DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </>
+    )
 }

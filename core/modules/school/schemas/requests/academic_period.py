@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Optional
 import uuid
 
@@ -6,8 +6,7 @@ from shared.data.schemas.requests.base_request import BaseRequest
 
 
 class CreateCampusAcademicPeriodRequest(BaseRequest):
-    school_id: uuid.UUID
     name: str
-    start_date: datetime
-    end_date: datetime
+    start_date: date
+    end_date: date
     parent_id: Optional[uuid.UUID] = None

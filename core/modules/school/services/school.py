@@ -14,7 +14,7 @@ from shared.data.repositories.role_repository import RoleRepository
 from shared.data.repositories.school_repository import SchoolRepository
 from shared.data.repositories.staff_repository import StaffRepository
 from shared.data.repositories.user_repository import UserRepository
-from shared.data.schemas.domain import RoleDomain, SchoolDomain, StaffDomain, UserDomain
+from shared.data.schemas.domain import RoleDomain, SchoolDomain, StaffDomain, UserDomain, UserInputDomain
 from shared.data.schemas.exceptions import RecordAlreadyExistsException, RecordNotFoundException
 from shared.utils.school import generate_domain
 from shared.utils.token import TokenTypes, decode_token
@@ -44,7 +44,7 @@ class SchoolServices:
                 #         detail="Invalid role selected"
                 #     )
                 
-                user_data = UserDomain(
+                user_data = UserInputDomain(
                     first_name=request.creator.first_name,
                     last_name=request.creator.last_name,
                     middle_name=request.creator.middle_name,

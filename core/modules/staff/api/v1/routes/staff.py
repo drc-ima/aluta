@@ -1,3 +1,4 @@
+import json
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -18,13 +19,24 @@ def school_staff(
     db: Session = Depends(get_db),
     user: dict = Depends(school_require_permission("staff:write", "staff:read")),
     page: int = 1,
-    page_size: int = 1,
-    term: str = "",
+    limit: int = 20,
+    search: str = "",
+    filters: str = "",
+    sortBy: str = "",
+    sortOrder: str = ""
 ):
     try:
         logger.info(f"Router: Fetching staff")
 
-        staff: dict = StaffServices.get_school_staff(db, school_id=school_id)
+        params = {
+            "page": page,
+            "limit": limit,
+            "search": search,
+            "filters": json.loads(filters) if filters else [],
+            "sortBy": sortBy,
+            "sortOrder": sortOrder
+        }
+        staff: dict = StaffServices.get_school_staff(db, school_id=school_id, **params)
         return staff
 
     except HTTPException as e:
@@ -35,11 +47,12 @@ def school_staff(
         raise HTTPException(status_code=500, detail=f"Failed fetching staff: {str(e)}")
 
 
-@router.post("/{school_id}", status_code=200)
+@router.post("/{school_id}", status_code=201)
 def create_school_staff(
     school_id: uuid.UUID,
     request: NewStaffRequest,
     db: Session = Depends(get_db),
+    user: dict = Depends(school_require_permission("staff:write")),
 ):
     try:
         logger.info(f"Router: Creting new staff.")

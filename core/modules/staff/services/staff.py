@@ -23,9 +23,9 @@ from shared.data.schemas.exceptions import RecordAlreadyExistsException, RecordN
 class StaffServices:
 
     @exception_catcher
-    def get_school_staff(db: Session, **params: Any) -> dict:
+    def get_school_staff(db: Session, school_id: uuid.UUID, **params: Any) -> dict:
         try:
-            staff = StaffRepository().paginated_filter(db, **params)
+            staff = StaffRepository().paginated_filter(db, school_id=school_id, **params)
 
             return staff
         except Exception as e:

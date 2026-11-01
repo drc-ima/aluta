@@ -50,6 +50,16 @@ class UserRepository:
 
         return user.to_pydantic() if user else None
 
+    def get_user_password_hash(self, db: Session, username: str) -> str | None:
+        user = (
+            db.query(User)
+            .options(selectinload(User.user_roles).selectinload(UserRole.role))
+            .filter(User.username == username)
+            .one_or_none()
+        )
+
+        return user.password if user else None
+
     def create_user(self, db: Session, data: UserInputDomain) -> UserDomain:
 
         # username = data.email if data.username_field == "Email" else data.phone

@@ -8,19 +8,28 @@ import { createContext, useContext, useEffect, useMemo } from "react"
 import { toast } from "sonner"
 import { useAuth } from "./authProvider"
 import type { CampusT, SchoolT } from "@/types/staff"
+import { useAcademicYears } from "@/hooks/queries"
+import type { AcademicPeriodT } from "@/types/academicPeriod"
 
 export type DefaultsProps = {
     [key: string]: string
 }
 
 type UserDefaultsProviderState = {
-    defaults: DefaultsProps | null | undefined,
-    loadingSchools: boolean,
-    loadingSettings: boolean,
-    schoolsCampuses: SchoolCampusProps[] | undefined,
-    selectedCampus: CampusT | null,
-    selectedSchool: SchoolT | null,
-    schoolRole: any | null;
+    defaults: DefaultsProps | null | undefined
+    loadingSchools: boolean
+    loadingSettings: boolean
+    schoolsCampuses: SchoolCampusProps[] | undefined
+    selectedCampus: CampusT | null
+    selectedSchool: SchoolT | null
+    schoolRole: any | null
+    fetchDefaults: (defaultArgs: DefaultModulePayload[]) => Promise<void>
+    currentAcademicYear: AcademicPeriodT | undefined
+    currentAcademicTerm: AcademicPeriodT | undefined
+    refetchAcademicPeriods: () => Promise<void> | any
+    academicYears: AcademicPeriodT[] | undefined
+    loadingAcademicPeriods: boolean
+    mutateDefaults: any
 }
 const UserDefaultsContext = createContext<UserDefaultsProviderState | undefined>(undefined);
 
@@ -80,7 +89,7 @@ export function UserDefaultsProvider({
     }, [selectedSchool, defaults?.Campus]);
 
     const schoolRole = useMemo(() => {
-        if(!user) return null;
+        if (!user) return null;
         if (!selectedSchool) return null;
         return user?.roles.find((role: any) => role.school_id === selectedSchool.id)
     }, [selectedSchool, user])
@@ -118,6 +127,27 @@ export function UserDefaultsProvider({
         })
     }
 
+    const {
+        data: academicYears,
+        refetch: refetchAcademicPeriods,
+        isLoading: loadingAcademicPeriods
+    } = useAcademicYears(selectedCampus?.id!, selectedCampus?.school_id!)
+
+    const currentAcademicYear = useMemo(() => {
+        if(defaults) {
+            if(defaults.AcademicYear) {
+                return academicYears?.find(ay => ay.id === defaults.AcademicYear)
+            }
+        }
+        return academicYears?.find(ay => ay.today_year)
+    }, [academicYears, defaults])
+
+    const currentAcademicTerm = useMemo(() => {
+        if(!currentAcademicYear) return undefined
+
+        return currentAcademicYear.children.find(ay => ay.today_term)
+    }, [academicYears, currentAcademicYear])
+
     return (
         <UserDefaultsContext.Provider
             value={{
@@ -127,7 +157,14 @@ export function UserDefaultsProvider({
                 schoolsCampuses: schoolsCampuses.data,
                 selectedSchool,
                 selectedCampus,
-                schoolRole
+                schoolRole,
+                fetchDefaults,
+                currentAcademicYear,
+                currentAcademicTerm,
+                refetchAcademicPeriods,
+                academicYears,
+                loadingAcademicPeriods,
+                mutateDefaults
             }}
         >
             {
@@ -153,7 +190,7 @@ export function UserDefaultsProvider({
 
 export const useUserDefaultsProvider = () => {
     const context = useContext(UserDefaultsContext)
-    if (!context) throw new Error("useUserDefaults must be used within a UserDefaultsProvider")
+    if (!context) throw new Error("useUserDefaultsProvider must be used within a UserDefaultsProvider")
     return context;
 }
 
