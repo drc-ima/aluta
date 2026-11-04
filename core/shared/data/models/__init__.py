@@ -1024,13 +1024,13 @@ class EnrollmentStatus(AuditMixin, Base):
 
 
 class EnrollmentCourse(AuditMixin, Base):
-    __tablename__ = "classroom_course_staff"
+    __tablename__ = "enrollment_course"
     __table_args__ = (
         UniqueConstraint(
             "enrollment_id",
             "course_id",
             name="uq_enrollment_course"
-        )
+        ),
     )
 
     enrollment_id: Mapped[uuid.UUID] = mapped_column(
