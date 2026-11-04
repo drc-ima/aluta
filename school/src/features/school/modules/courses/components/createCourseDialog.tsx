@@ -38,7 +38,7 @@ export default function CreateCourseDialog({
     }))
     const [searchParams] = useSearchParams()
     const navigate = useNavigate()
-    const goto = searchParams.get("returnTo") || "";
+    const goto = searchParams.get("return-to") || "";
     const action = searchParams.get("action") || "";
 
     const open = action == "create" ? true : false;
@@ -166,7 +166,7 @@ export default function CreateCourseDialog({
                                 type="button"
                                 variant={"outline"}
                                 onClick={() => {
-                                    navigate(`/staff/departments?action=create&returnTo=/courses?action=create`)
+                                    navigate(`/staff/departments?action=create&return-to=/courses?action=create`)
                                 }}
                                 size={"sm"}
                                 title="Add a new department"

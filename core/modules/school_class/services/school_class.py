@@ -7,7 +7,7 @@ import uuid
 from handlers.exceptions import exception_catcher
 from middlewares.context.request import get_user_id_email
 from middlewares.logging.logger import logger
-from modules.school_class.schemas.requests.school_class import CreateSchoolClassRequest
+from modules.school_class.schemas.requests.school_class import CreateRangeSchoolClassRequest, CreateSchoolClassRequest
 from shared.data.models import SchoolClass
 from shared.data.repositories.campus_repository import CampusRepository
 from shared.data.repositories.school_class_repository import SchoolClassRepository
@@ -21,12 +21,12 @@ class SchoolClassServices:
     @exception_catcher
     def get_campus_classes(db: Session, campus_id: uuid.UUID) -> list[dict[str, Any]]:
 
-        classes = db.query(SchoolClass).filter(SchoolClass.campus_id==campus_id).order_by(SchoolClass.code.asc())
+        classes = db.query(SchoolClass).filter(SchoolClass.campus_id==campus_id).order_by(SchoolClass.level.asc())
 
         return [klass.to_pydantic().model_dump(mode="json") for klass in classes]
      
     @exception_catcher
-    def create_range_class(db: Session, campus_id: uuid.UUID, request: CreateSchoolClassRequest) -> list[SchoolClassDomain]:
+    def create_range_class(db: Session, campus_id: uuid.UUID, request: CreateRangeSchoolClassRequest) -> list[SchoolClassDomain]:
 
         try:
             with db.begin():
@@ -40,7 +40,7 @@ class SchoolClassServices:
                 classes = [
                     SchoolClassDomain(
                         school_id=campus.school_id,
-                        level=str(level),
+                        level=level,
                         capacity=request.capacity,
                         section=section.name,
                         campus_id=campus.id,
@@ -83,7 +83,68 @@ class SchoolClassServices:
                 return created
 
         except Exception as e:
-            logger.error(f"Service: Error creating course: {e}")
+            logger.error(f"Service: Error creating classes: {e}")
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    @exception_catcher
+    def create_class(db: Session, campus_id: uuid.UUID, request: CreateSchoolClassRequest) -> list[SchoolClassDomain]:
+
+        try:
+            with db.begin():
+                created_by_id = get_user_id_email().get("id")
+                created_at = datetime.now(timezone.utc)
+                campus = CampusRepository.get(db, id=campus_id)
+
+                if not campus:
+                    raise RecordNotFoundException("Campus", campus_id)
+
+                classes = [
+                    SchoolClassDomain(
+                        school_id=campus.school_id,
+                        level=request.level,
+                        capacity=request.capacity,
+                        section=section.name,
+                        campus_id=campus.id,
+                        name=request.name,
+                        code=f"{request.name.lower().replace(" ", "-")}-{request.level}-{section.name.lower()}",
+                        active=True,
+                        created_by_id=created_by_id,
+                        updated_by_id=created_by_id,
+                        created_at=created_at,
+                        updated_at=created_at
+                    ) for section in request.sections
+                ] if len(request.sections) else [
+                    SchoolClassDomain(
+                        school_id=campus.school_id,
+                        level=request.level,
+                        capacity=request.capacity,
+                        section=None,
+                        campus_id=campus.id,
+                        name=request.name,
+                        code=f"{request.name.lower().replace(" ", "-")}-{request.level}",
+                        active=True,
+                        created_by_id=created_by_id,
+                        updated_by_id=created_by_id,
+                        created_at=created_at,
+                        updated_at=created_at
+                    )
+                ]
+
+                class_codes = [klass.code for klass in classes]
+                already_created = [klass.to_pydantic().code for klass in db.query(SchoolClass).filter(SchoolClass.code.in_(class_codes))]
+                
+                # exclude already created
+                
+                only_new = [klass for klass in classes if klass.code not in already_created]
+                
+                created = SchoolClassRepository.bulk_create(db, only_new)
+                
+                return created
+        except Exception as e:
+            logger.error(f"Service: Error creating class: {e}")
             db.rollback()
             raise
         finally:

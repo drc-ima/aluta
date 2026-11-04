@@ -8,6 +8,7 @@ import { DataTable, type DataTableFeatures } from "@/components/dataTable/table"
 import type { SchoolClassT } from "@/types/schoolClass";
 import { DataTableColumnHeader } from "@/components/dataTable/columnHeader";
 import { LongText } from "@/components/ui/longText";
+import CreateClassDialog from "../components/createClassDialog";
 
 export default function Classes() {
     const [searchParams, setSearchParams] = useSearchParams()
@@ -26,6 +27,17 @@ export default function Classes() {
                 {
                     children: "Create Range",
                     size: "sm",
+                    variant: "secondary",
+                    type: "button",
+                    onClick: () => {
+                        searchParams.set("action", "create-range")
+                        setSearchParams(searchParams)
+                    }
+                },
+                {
+                    children: "Create Class",
+                    size: "sm",
+                    variant: "default",
                     type: "button",
                     onClick: () => {
                         searchParams.set("action", "create")
@@ -57,6 +69,15 @@ export default function Classes() {
                 // ]}
             />
             <CreateRangeClassDialog
+                handleOpenChange={(open) => {
+                    if (!open) {
+                        searchParams.delete("action")
+                        setSearchParams(searchParams)
+                    }
+                }}
+                refetch={() => refetch()}
+            />
+            <CreateClassDialog
                 handleOpenChange={(open) => {
                     if (!open) {
                         searchParams.delete("action")

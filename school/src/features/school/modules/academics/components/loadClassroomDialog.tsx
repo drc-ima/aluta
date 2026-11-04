@@ -39,7 +39,7 @@ export default function LoadClassroomDialog({
 
     const [searchParams, _] = useSearchParams()
 
-    const goto = searchParams.get("returnTo") || "";
+    const goto = searchParams.get("return-to") || "";
     const action = searchParams.get("action") || "";
 
     const open = action == "load-create" ? true : false;

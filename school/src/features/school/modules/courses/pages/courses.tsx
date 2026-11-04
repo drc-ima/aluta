@@ -99,7 +99,7 @@ const columns: ColumnDef<DataTableFeatures, CourseT>[] = [
         ),
         cell: ({ row }) => {
             const staffNo = row.original.name;
-            return <LongText className='max-w-36 ps-3'>{staffNo}</LongText>
+            return <LongText className=''>{staffNo}</LongText>
         },
         // meta: {
         //     className: cn(
@@ -118,7 +118,7 @@ const columns: ColumnDef<DataTableFeatures, CourseT>[] = [
         ),
         cell: ({ row }) => {
             
-            return <LongText className='max-w-36'>{row.original.code}</LongText>
+            return <LongText>{row.original.code}</LongText>
         },
         // meta: { className: 'w-36' },
         enableHiding: false,
@@ -134,7 +134,7 @@ const columns: ColumnDef<DataTableFeatures, CourseT>[] = [
             const department = row.original.department.name
 
             
-            return <LongText className='max-w-36'>{department}</LongText>
+            return <LongText>{department}</LongText>
         },
         // meta: { className: 'w-36' },
         enableHiding: false,

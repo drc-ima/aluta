@@ -3,13 +3,13 @@ import { useMutation, useQuery } from "@tanstack/react-query"
 import { coursesApi, createCourseApi, type CoursePayload } from "./api";
 import type { QueryParams } from "../staff/hooks";
 
-export function useCourses({school_id, params}:{school_id: string, params: QueryParams}) {
+export function useCourses({school_id, params}:{school_id: string, params?: QueryParams}) {
     const { fetchInstance } = useAuth();
 
     return useQuery({
         queryKey: ["courses", school_id, params],
-        queryFn: ({ signal }) => coursesApi(fetchInstance, school_id, params, signal),
-        enabled: school_id.length > 0
+        queryFn: ({ signal }) => coursesApi(fetchInstance, school_id, signal, params),
+        enabled: !!school_id
     })
 }
 

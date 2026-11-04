@@ -34,7 +34,8 @@ export const API_ENDPOINTS = {
 
     // Classes
     FETCH_CLASSES: (school_id: string, campus_id: string) => `/classes/${school_id}/${campus_id}`,
-    CREATE_RANGE_CLASSES: (school_id: string, campus_id: string) => `/classes/${school_id}/${campus_id}`,
+    CREATE_RANGE_CLASSES: (school_id: string, campus_id: string) => `/classes/range/${school_id}/${campus_id}`,
+    CREATE_CLASSES: (school_id: string, campus_id: string) => `/classes/${school_id}/${campus_id}`,
 
     // Academic Periods
     FETCH_ACADEMIC_YEARS: (campus_id: string, school_id: string) => `/school/academic-periods/${school_id}/${campus_id}`,
@@ -43,4 +44,6 @@ export const API_ENDPOINTS = {
     // Classrooms
     CREATE_BULK_CLASSROOMS: (school_id: string, academic_period_id: string) => `/school/classrooms/${school_id}/${academic_period_id}`,
     FETCH_CLASSROOMS:  (school_id: string, academic_period_id: string) => `/school/classrooms/${school_id}/${academic_period_id}`,
+    FETCH_CLASSROOM: (school_id: string, academic_period_id: string, classroom_id: string) => `/school/classrooms/details/${school_id}/${academic_period_id}/${classroom_id}`,
+    CREATE_CLASSROOM_COURSE_STAFF: (school_id: string) => `/school/classrooms/course-staff/${school_id}`
 }

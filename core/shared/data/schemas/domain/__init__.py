@@ -372,10 +372,13 @@ class CourseDomain(AuditSchemaMixin, BaseModel):
 
 class ClassroomCourseStaffDomain(AuditSchemaMixin, BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    class_id: uuid.UUID
+    classroom_id: uuid.UUID
     course_id: uuid.UUID
     staff_id: uuid.UUID
     academic_period_id: uuid.UUID
+    course: Optional[CourseDomain] = None
+    staff: Optional[StaffDomain] = None
+    # classroom: Optional["ClassroomDomain"] = None
 
 
 class SchoolClassDomain(AuditSchemaMixin, BaseModel):
@@ -384,9 +387,8 @@ class SchoolClassDomain(AuditSchemaMixin, BaseModel):
     campus_id: uuid.UUID
     name: str
     code: str
-    level: str
+    level: int
     section: Optional[str] = None
-    description: Optional[str] = None
     capacity: Optional[int] = None
     active: bool
 
@@ -461,6 +463,8 @@ class ClassroomDomain(AuditSchemaMixin, BaseModel):
 
     academic_period: Optional["AcademicPeriodDomain"] = None
     school_class: Optional[SchoolClassDomain] = None
+    courses: list[ClassroomCourseStaffDomain] = Field(default_factory=list)
+    enrollments: list["EnrollmentDomain"] = Field(default_factory=list)
 
 class EnrollmentDomain(AuditSchemaMixin, BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -485,3 +489,10 @@ class EnrollmentStatusDomain(AuditSchemaMixin, BaseModel):
     end_date: Optional[date] = None
 
     enrollment: Optional[EnrollmentDomain] = None
+
+
+class EnrollmentCourseDomain(AuditSchemaMixin, BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    enrollment_id: uuid.UUID
+    course_id: uuid.UUID

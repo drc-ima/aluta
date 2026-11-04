@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from middlewares.logging.logger import logger
 from modules.school.schemas.responses import SchoolResponse
-from modules.school_class.schemas.requests.school_class import CreateSchoolClassRequest
+from modules.school_class.schemas.requests.school_class import CreateRangeSchoolClassRequest, CreateSchoolClassRequest
 from modules.school_class.services.school_class import SchoolClassServices
 from shared.data.session import get_db
 from shared.utils.permissions import school_require_permission
@@ -34,12 +34,12 @@ def campus_klasses(
         )
 
 @router.post(
-    "/{school_id}/{campus_id}", 
+    "/range/{school_id}/{campus_id}", 
     status_code=201, 
     response_model=SchoolResponse
 )
-def create_campus_klasses(
-    request: CreateSchoolClassRequest,
+def create_range_campus_classes(
+    request: CreateRangeSchoolClassRequest,
     school_id: uuid.UUID,
     campus_id: uuid.UUID,
     db: Session = Depends(get_db),
@@ -65,3 +65,35 @@ def create_campus_klasses(
             status_code=500, detail=f"Failed  creating school class: {str(e)}"
         )
 
+
+@router.post(
+    "/{school_id}/{campus_id}",
+    status_code=201,
+    response_model=SchoolResponse
+)
+def create_campus_class(
+    request: CreateSchoolClassRequest,
+    school_id: uuid.UUID,
+    campus_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    user: dict = Depends(
+        school_require_permission("classes:write")
+    )
+):
+    try:
+        logger.info("Router: Creating class...")
+        
+        SchoolClassServices.create_class(db, campus_id, request)
+
+        return SchoolResponse(
+            message="New class created.",
+            school_id=school_id
+        )
+    except HTTPException as e:
+        logger.error(f"Router: HTTP error creating school class - {e.detail}")
+        raise e
+    except Exception as e:
+        logger.error(f"Router: Unexpected error creating school class - {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed  creating school class: {str(e)}"
+        )

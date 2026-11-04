@@ -4,10 +4,11 @@ import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import AcademicPeriods from "./pages/periods";
 import Classrooms from "./pages/classrooms";
+import ClassroomDetails from "./pages/classroomDetails";
 
 export default function AcademicsModule({module}: {module: SchoolModuleT | null}) {
     const { changeNavLinks } = useLayout();
-    const { nav, moduleSlug } = useParams();
+    const { nav, moduleSlug, id } = useParams();
 
     useEffect(() => {
         changeNavLinks([
@@ -36,7 +37,8 @@ export default function AcademicsModule({module}: {module: SchoolModuleT | null}
         !nav ? (
             <AcademicPeriods />
         ) : nav === "classrooms" ? (
-            <Classrooms />
+            !id ? <Classrooms /> : <ClassroomDetails />
+            
         ) : (<></>)
     )
 }

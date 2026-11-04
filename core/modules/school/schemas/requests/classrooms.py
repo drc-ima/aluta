@@ -13,3 +13,9 @@ class CreateClassroomRequest(BaseRequest):
 
 class BulkCreateClassroomsRequest(BaseRequest):
     classrooms: list[CreateClassroomRequest] = Field(default_factory=list)
+
+
+class AssignClassroomCourseStaffRequest(BaseRequest):
+    classroom_id: uuid.UUID
+    staff_id: uuid.UUID
+    course_id: uuid.UUID

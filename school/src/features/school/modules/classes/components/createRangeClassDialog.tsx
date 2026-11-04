@@ -42,13 +42,13 @@ export default function CreateRangeClassDialog({
     })
 
     const [searchParams, _] = useSearchParams()
-    const goto = searchParams.get("returnTo") || "";
+    const goto = searchParams.get("return-to") || "";
     const action = searchParams.get("action") || "";
 
-    const open = action == "create" ? true : false;
+    const open = action == "create-range" ? true : false;
 
     const { selectedCampus } = useUserDefaultsProvider()
-    const { isPending, mutate } = useCreateRangeClasses(selectedCampus !== null ? selectedCampus?.school_id : "", selectedCampus !== null ? selectedCampus.id : "")
+    const { isPending, mutate } = useCreateRangeClasses(selectedCampus?.school_id!, selectedCampus?.id!)
 
     const {
         fields: sections,

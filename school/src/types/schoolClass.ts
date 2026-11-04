@@ -1,4 +1,6 @@
 import type { AcademicPeriodT } from "./academicPeriod"
+import type { CourseT } from "./course"
+import type { StaffT } from "./staff"
 
 export type SchoolClassT = {
     active: boolean
@@ -23,6 +25,15 @@ export type RangeSchoolClassPayload = {
     }[]
 } & BodyInit
 
+export type SchoolClassPayload = {
+    name: string
+    level: number
+    capacity: number
+    sections: {
+        name: string
+    }[]
+} & BodyInit
+
 
 export type ClassroomPayload = {
     classrooms: {
@@ -32,10 +43,42 @@ export type ClassroomPayload = {
 } & BodyInit
 
 
+export type ClassroomCourseStaffT = {
+    id: string
+    classroom_id: string
+    course_id: string
+    staff_id: string
+    course: CourseT
+    classroom: ClassroomT
+    staff: StaffT
+}
+
+export type ClassroomStaffAssignmentT = {
+    id: string
+    classroom_id: string
+    staff_id: string
+    academic_period_id: string
+    classroom: ClassroomT
+    staff: StaffT
+    academic_period: AcademicPeriodT
+}
+
 export type ClassroomT = {
     academic_period: AcademicPeriodT
     school_class: SchoolClassT
     id: string
     academic_period_id: string
     school_class_id: string
+    staff_assignments: ClassroomCourseStaffT[]
+    courses: ClassroomCourseStaffT[]
+    enrollments: any[]
+    previous_id: string | null | undefined
+    next_id: string | null | undefined
+    sections: ClassroomT[]
 }
+
+export type ClassroomCourseStaffPayload = {
+    classroom_id: string
+    course_id: string
+    staff_id: string
+} & BodyInit

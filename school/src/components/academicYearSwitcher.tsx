@@ -100,7 +100,7 @@ export function AcademicYearSwitcher() {
                     }
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className='gap-2 p-2' onClick={() => {
-                        searchParams.set("academicPeriod", "create")
+                        searchParams.set("academic-period", "create")
                         setSearchParams(searchParams)
                     }}>
                         <div className='flex size-6 items-center justify-center rounded-md border bg-background'>
@@ -113,7 +113,7 @@ export function AcademicYearSwitcher() {
             <CreateAcademicPeriodDialog
                 handleOpenChange={(open) => {
                     if (!open) {
-                        searchParams.delete("academicPeriod")
+                        searchParams.delete("academic-period")
                         searchParams.delete("parent_id")
                         setSearchParams(searchParams)
                     }

@@ -6,4 +6,4 @@ from shared.data.schemas.domain import SchoolClassDomain
 class SchoolClassRepository(BaseRepository[SchoolClass, SchoolClassDomain]):
 
     model = SchoolClass
-    ordering = (SchoolClass.code)
+    ordering = (SchoolClass.level)

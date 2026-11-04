@@ -6,7 +6,6 @@ import type { SchoolModuleT } from "@/types/staff";
 import CoursesModule from "./courses";
 import StudentModule from "./students";
 import ClassesModule from "./classes";
-import AcademicPeriods from "./academics/pages/periods";
 import AcademicsModule from "./academics";
 
 export default function ModulePage(){

@@ -47,7 +47,7 @@ export function CreatePositionDrawer({
     const { isPending, mutate } = useCreateSchoolPosition(selectedSchool !== null ? selectedSchool?.id : "")
     const [searchParams, _] = useSearchParams()
     const navigate = useNavigate()
-    const goto = searchParams.get("returnTo") || "";
+    const goto = searchParams.get("return-to") || "";
     const action = searchParams.get("action") || "";
 
     const open = action == "create" ? true : false;

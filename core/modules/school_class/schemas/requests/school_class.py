@@ -5,15 +5,15 @@ from pydantic import Field, field_validator, model_validator
 from shared.data.schemas.requests.base_request import BaseRequest
 
 
-class Section(BaseRequest):
+class SectionRequest(BaseRequest):
     name: str = Field(min_length=1, max_length=50)
 
-class CreateSchoolClassRequest(BaseRequest):
+class CreateRangeSchoolClassRequest(BaseRequest):
     prefix: str = Field(min_length=1, max_length=50)
     start: int = Field(ge=1)
     end: int = Field(ge=1)
     capacity: int = Field(ge=1)
-    sections: list[Section] = Field(default_factory=list)
+    sections: list[SectionRequest] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_range(self):
@@ -24,3 +24,10 @@ class CreateSchoolClassRequest(BaseRequest):
             raise ValueError("You cannot create more than 100 classes at once")
 
         return self
+
+
+class CreateSchoolClassRequest(BaseRequest):
+    name: str
+    level: int
+    capacity: int
+    sections: list[SectionRequest] = Field(default_factory=list)

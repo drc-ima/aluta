@@ -1,15 +1,21 @@
 from datetime import datetime, timezone
 import uuid
 
+from sqlalchemy import not_
+
 from handlers.exceptions import exception_catcher
 from sqlalchemy.orm import Session
 
 from middlewares.context.request import get_user_id_email
 from middlewares.logging.logger import logger
-from modules.school.schemas.requests.classrooms import BulkCreateClassroomsRequest
+from modules.school.schemas.requests.classrooms import AssignClassroomCourseStaffRequest, BulkCreateClassroomsRequest
+from shared.data.models import Classroom, SchoolClass
 from shared.data.repositories.academic_period_repository import AcademicPeriodRepository
+from shared.data.repositories.classroom_course_staff_repository import ClassroomCourseStaffRepository
 from shared.data.repositories.classroom_repository import ClassroomRepository
-from shared.data.schemas.domain import ClassroomDomain
+from shared.data.repositories.course_repository import CourseRepository
+from shared.data.repositories.staff_repository import StaffRepository
+from shared.data.schemas.domain import ClassroomCourseStaffDomain, ClassroomDomain
 from shared.data.schemas.exceptions import RecordNotFoundException
 
 
@@ -53,11 +59,104 @@ class ClassroomServices:
 
     def fetch_classrooms(db: Session, academic_period_id: uuid.UUID):
         try:
-            classes = ClassroomRepository.filter(db, academic_period_id=academic_period_id)
+            classes = ClassroomRepository(ordering=(SchoolClass.level.asc(),)).filter(db, academic_period_id=academic_period_id)
 
             return [cls.model_dump(mode="json") for cls in classes]
         except Exception as e:
             logger.error(f"Service: Error fetching classrooms: {e}")
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    def fetch_classroom(db: Session, academic_period_id: uuid.UUID, classroom_id: uuid.UUID):
+        try:
+            classroom = ClassroomRepository.get(db, academic_period_id=academic_period_id, id=classroom_id)
+
+            if not classroom:
+                raise RecordNotFoundException("Classroom", classroom_id)
+
+            # check if the classroom has sections
+            sections = (
+                db.query(Classroom)
+                .join(SchoolClass)
+                .filter(
+                    SchoolClass.level==classroom.school_class.level
+                ).all()
+            )
+
+            next_level = classroom.school_class.level + 1
+            previous_level = classroom.school_class.level - 1
+
+            next_classroom = (
+                db.query(Classroom)
+                .join(SchoolClass)
+                .filter(
+                    SchoolClass.level==next_level, 
+                    Classroom.academic_period_id==classroom.academic_period_id
+                ).first()
+            )
+
+            previous_classroom = (
+                db.query(Classroom)
+                .join(SchoolClass)
+                .filter(
+                    SchoolClass.level==previous_level, 
+                    Classroom.academic_period_id==classroom.academic_period_id
+                ).first()
+            )
+
+            return {
+                **classroom.model_dump(),
+                "sections": [section.to_pydantic().model_dump() for section in sections],
+                "next_id": next_classroom.id if next_classroom else None,
+                "previous_id": previous_classroom.id if previous_classroom else None
+            }
+        except Exception as e:
+            logger.error(f"Service: Error fetching classrooms: {e}")
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    def assign_classroom_course_and_staff(db: Session, request: AssignClassroomCourseStaffRequest):
+
+        try:
+            with db.begin():
+
+                classroom = ClassroomRepository.get(db, id=request.classroom_id)
+
+                if not classroom:
+                    raise RecordNotFoundException("Classroom", request.classroom_id)
+
+                staff = StaffRepository.get(db, id=request.staff_id)
+
+                if not staff:
+                    raise RecordNotFoundException("Staff", request.staff_id)
+
+                course = CourseRepository.get(db, id=request.course_id)
+
+                if not course:
+                    raise RecordNotFoundException("Course", request.course_id)
+
+                created_by_id = get_user_id_email().get("id")
+                data = ClassroomCourseStaffDomain(
+                    classroom_id=classroom.id,
+                    academic_period_id=classroom.academic_period_id,
+                    staff_id=staff.id,
+                    course_id=course.id,
+                    created_by_id=created_by_id,
+                    updated_by_id=created_by_id
+                )
+
+                created = ClassroomCourseStaffRepository.create(
+                    db=db,
+                    data=data
+                )
+
+                return created
+        except Exception as e:
+            logger.error(f"Service: Error assigning classroom course: {e}")
             db.rollback()
             raise
         finally:

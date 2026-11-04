@@ -1,39 +1,43 @@
 import { API_ENDPOINTS } from "@/api/api.endpoints";
 import type { FetchInstance } from "@/types/fetchInstance";
-import {type CourseT } from "@/types/course";
+import { type CourseT } from "@/types/course";
 import type { QueryParams } from "../staff/hooks";
 
 export function coursesApi(
     fetchInstance: FetchInstance,
     school_id: string,
-    params: QueryParams,
-    signal: AbortSignal
+    signal: AbortSignal,
+    params?: QueryParams,
+    
 ) {
 
     const query = new URLSearchParams()
-    if (params.page) {
-        query.set("page", String(params.page));
-    }
-    if (params.limit) {
-        query.set("limit", String(params.limit));
-    }
-    if (params.search) {
-        query.set("search", params.search);
-    }
+    if (params) {
+        if (params.page) {
+            query.set("page", String(params.page));
+        }
+        if (params.limit) {
+            query.set("limit", String(params.limit));
+        }
+        if (params.search) {
+            query.set("search", params.search);
+        }
 
-    if (params.sorting) {
-        const sort = params.sorting[0];
+        if (params.sorting) {
+            const sort = params.sorting[0];
 
-        if (sort) {
-            query.set("sortBy", sort.id);
-            query.set("sortOrder", sort.desc ? "desc" : "asc");
+            if (sort) {
+                query.set("sortBy", sort.id);
+                query.set("sortOrder", sort.desc ? "desc" : "asc");
+            }
+        }
+
+        if (params.filters) {
+            // The backend must understand this filters format.
+            query.set("filters", JSON.stringify(params.filters));
         }
     }
 
-    if (params.filters) {
-        // The backend must understand this filters format.
-        query.set("filters", JSON.stringify(params.filters));
-    }
 
     return fetchInstance<CourseT[]>(
         `${API_ENDPOINTS.FETCH_COURSES(school_id)}?${query}`,

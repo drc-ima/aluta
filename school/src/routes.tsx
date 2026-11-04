@@ -31,7 +31,7 @@ const router = createBrowserRouter([
                 element: <Dashboard />
             },
             {
-                path: "/:moduleSlug/:nav?",
+                path: "/:moduleSlug/:nav?/:id?",
                 element: <ModulePage />
             }
         ]

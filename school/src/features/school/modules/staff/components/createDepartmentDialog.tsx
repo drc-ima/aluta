@@ -43,7 +43,7 @@ export default function CreateDepartmentDialog({
     const { selectedSchool } = useUserDefaultsProvider()
     const { isPending, mutate } = useCreateSchoolDepartment(selectedSchool !== null ? selectedSchool?.id : "")
     const [searchParams, _] = useSearchParams()
-    const goto = searchParams.get("returnTo") || "";
+    const goto = searchParams.get("return-to") || "";
     const action = searchParams.get("action") || "";
 
     const open = action == "create" ? true : false;

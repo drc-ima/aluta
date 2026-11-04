@@ -77,7 +77,7 @@ export default function CreateStaffDialog({
     })
     const [searchParams, _] = useSearchParams()
     const navigate = useNavigate()
-    const goto = searchParams.get("returnTo") || "";
+    const goto = searchParams.get("return-to") || "";
     const action = searchParams.get("action") || "";
 
     const open = action == "create" ? true : false;
@@ -337,7 +337,7 @@ export default function CreateStaffDialog({
                                     type="button"
                                     variant={"outline"}
                                     onClick={() => {
-                                        navigate(`/staff/departments?action=create&returnTo=/staff/all?action=create`)
+                                        navigate(`/staff/departments?action=create&return-to=/staff/all?action=create`)
                                     }}
                                     size={"sm"}
                                     title="Add a new department"
@@ -610,7 +610,7 @@ const PositionFields = ({ form }: { form: UseFormReturn<StaffForm> | any }) => {
                                                     type="button"
                                                     variant={"outline"}
                                                     onClick={() => {
-                                                        navigate(`/staff/positions?action=create&returnTo=/staff/all?action=create`)
+                                                        navigate(`/staff/positions?action=create&return-to=/staff/all?action=create`)
                                                     }}
                                                     size={"sm"}
                                                     title="Add a new position"

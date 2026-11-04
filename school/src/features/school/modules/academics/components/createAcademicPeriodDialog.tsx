@@ -32,8 +32,8 @@ export default function CreateAcademicPeriodDialog({
 }: CreateDialogProps & { periods: AcademicPeriodT[] }) {
     const [searchParams, _] = useSearchParams()
 
-    const goto = searchParams.get("returnTo") || "";
-    const action = searchParams.get("academicPeriod") || "";
+    const goto = searchParams.get("return-to") || "";
+    const action = searchParams.get("academic-period") || "";
     const parent_id = searchParams.get("parent_id");
 
     const form = useForm<AcademicPeriodForm>({
