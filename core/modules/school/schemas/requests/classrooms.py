@@ -19,3 +19,9 @@ class AssignClassroomCourseStaffRequest(BaseRequest):
     classroom_id: uuid.UUID
     staff_id: uuid.UUID
     course_id: uuid.UUID
+
+
+class AssignClassroomStaffRequest(BaseRequest):
+    classroom_id: uuid.UUID
+    staff_id: uuid.UUID
+    head: bool = False

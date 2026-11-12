@@ -74,7 +74,7 @@ export function createDepartmentApi(
     )
 }
 
-export type StaffReponse = {
+export type StaffResponse = {
     items: StaffT[]
     total: number
     page: number
@@ -114,7 +114,7 @@ export function staffsApi(
     }
 
 
-    return fetchInstance<StaffReponse>(
+    return fetchInstance<StaffResponse>(
         `${API_ENDPOINTS.FETCH_STAFFS(school_id)}?${query}`,
         {
             method: "GET",

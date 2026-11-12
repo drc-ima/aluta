@@ -1,11 +1,11 @@
-import { useAuth } from "@/contexts/authProvider";
+
 import { cn } from "@/libs/utils";
 import { Outlet } from "react-router-dom";
 import { Header } from "./header";
 import { AlutaSchoolTitle } from "./alutaSchooTitle";
 import { Sidebar, SidebarHeader, SidebarInset, SidebarProvider } from "./sidebar";
 import { ProfileDropdown } from "../profileDropdown";
-import { useUserDefaultsProvider } from "@/contexts/userDefaultProvider";
+
 import { NavigationProgress } from "../navigationProgress";
 import { CampusSwitcher } from "../campusSwitcher";
 import { ThemeSwitch } from "../themeSwitch";

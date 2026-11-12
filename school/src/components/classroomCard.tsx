@@ -39,7 +39,7 @@ const ClassroomCard: React.FC<ClassCardT> = ({
             </dl>
             <div className="mx-auto w-full! flex p-[1rem] justify-end">
                 <Button
-                    size={"sm"}
+                    size={"icon"}
                     className="rounded-full!"
                     variant={"default"}
                     onClick={() => navigate(href)}

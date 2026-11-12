@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import {
   Collapsible,
@@ -36,6 +36,7 @@ import {
 export function NavGroup({ title, items }: NavGroupProps) {
   const { state, isMobile } = useSidebar()
   const location = useLocation();
+  const { moduleSlug } = useParams();
 
   const href = `${location.pathname}${location.search}${location.hash}`;
   return (
@@ -44,16 +45,17 @@ export function NavGroup({ title, items }: NavGroupProps) {
       <SidebarMenu>
         {items.map((item) => {
           const key = `${item.title}-${item.url}`
-
+          const isActive = href.split("/")[1] === moduleSlug!
+    
           if (!item.items)
-            return <SidebarMenuLink key={key} item={item} href={href} />
+            return <SidebarMenuLink key={key} item={item} href={href} isActive={isActive} />
 
           if (state === 'collapsed' && !isMobile)
             return (
-              <SidebarMenuCollapsedDropdown key={key} item={item} href={href} />
+              <SidebarMenuCollapsedDropdown key={key} item={item} href={href} isActive={isActive} />
             )
 
-          return <SidebarMenuCollapsible key={key} item={item} href={href} />
+          return <SidebarMenuCollapsible key={key} item={item} href={href} isActive={isActive} />
         })}
       </SidebarMenu>
     </SidebarGroup>
@@ -64,13 +66,15 @@ function NavBadge({ children }: { children: ReactNode }) {
   return <Badge className='rounded-full px-1 py-0 text-xs'>{children}</Badge>
 }
 
-function SidebarMenuLink({ item, href }: { item: NavLink; href: string }) {
+function SidebarMenuLink({ item, href }: { item: NavLink; href: string, isActive?: boolean }) {
   const { setOpenMobile } = useSidebar()
+  const { moduleSlug } = useParams();
+  const isActive = item.url.toString().split("/")[1] === moduleSlug!
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
         asChild
-        isActive={checkIsActive(href, item)}
+        isActive={checkIsActive(href, item) || isActive}
         tooltip={item.title}
       >
         <Link to={item.url} onClick={() => setOpenMobile(false)}>
@@ -86,15 +90,17 @@ function SidebarMenuLink({ item, href }: { item: NavLink; href: string }) {
 function SidebarMenuCollapsible({
   item,
   href,
+  isActive
 }: {
   item: NavCollapsible
-  href: string
+  href: string,
+  isActive?: boolean
 }) {
   const { setOpenMobile } = useSidebar()
   return (
     <Collapsible
       asChild
-      defaultOpen={checkIsActive(href, item, true)}
+      defaultOpen={isActive}
       className='group/collapsible'
     >
       <SidebarMenuItem>
@@ -132,9 +138,11 @@ function SidebarMenuCollapsible({
 function SidebarMenuCollapsedDropdown({
   item,
   href,
+  isActive
 }: {
   item: NavCollapsible
-  href: string
+  href: string,
+  isActive?: boolean
 }) {
   return (
     <SidebarMenuItem>
@@ -142,7 +150,7 @@ function SidebarMenuCollapsedDropdown({
         <DropdownMenuTrigger asChild>
           <SidebarMenuButton
             tooltip={item.title}
-            isActive={checkIsActive(href, item)}
+            isActive={isActive}
           >
             {item.icon && <item.icon />}
             <span>{item.title}</span>
@@ -159,7 +167,7 @@ function SidebarMenuCollapsedDropdown({
             <DropdownMenuItem key={`${sub.title}-${sub.url}`} asChild>
               <Link
                 to={sub.url}
-                className={`${checkIsActive(href, sub) ? 'bg-secondary' : ''}`}
+                className={`${isActive ? 'bg-secondary' : ''}`}
               >
                 {sub.icon && <sub.icon />}
                 <span className='max-w-52 text-wrap'>{sub.title}</span>
@@ -182,6 +190,7 @@ function checkIsActive(href: string, item: NavItem, mainNav = false) {
     !!item?.items?.filter((i) => i.url === href).length || // if child nav is active
     (mainNav &&
       href.split('/')[1] !== '' &&
-      href.split('/')[1] === item?.url?.split('/')[1])
+      href.split('/')[1] === item?.url?.toString().split('/')[1]
+    )
   )
 }

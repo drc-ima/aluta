@@ -1,22 +1,24 @@
 from datetime import datetime, timezone
 import uuid
 
-from sqlalchemy import not_
+from sqlalchemy import and_, not_
 
 from handlers.exceptions import exception_catcher
 from sqlalchemy.orm import Session
 
 from middlewares.context.request import get_user_id_email
 from middlewares.logging.logger import logger
-from modules.school.schemas.requests.classrooms import AssignClassroomCourseStaffRequest, BulkCreateClassroomsRequest
-from shared.data.models import Classroom, SchoolClass
+from modules.school.schemas.requests.classrooms import AssignClassroomCourseStaffRequest, AssignClassroomStaffRequest, BulkCreateClassroomsRequest
+from shared.data.models import Classroom, ClassroomCourseStaff, Enrollment, Media, SchoolClass, Student
 from shared.data.repositories.academic_period_repository import AcademicPeriodRepository
 from shared.data.repositories.classroom_course_staff_repository import ClassroomCourseStaffRepository
 from shared.data.repositories.classroom_repository import ClassroomRepository
+from shared.data.repositories.classroom_staff_assignment_repository import ClassroomStaffAssignmentRepository
 from shared.data.repositories.course_repository import CourseRepository
+from shared.data.repositories.enrollment_repository import EnrollmentRepository
 from shared.data.repositories.staff_repository import StaffRepository
-from shared.data.schemas.domain import ClassroomCourseStaffDomain, ClassroomDomain
-from shared.data.schemas.exceptions import RecordNotFoundException
+from shared.data.schemas.domain import ClassroomCourseStaffDomain, ClassroomDomain, ClassroomStaffAssignmentDomain
+from shared.data.schemas.exceptions import RecordAlreadyExistsException, RecordNotFoundException
 
 
 class ClassroomServices:
@@ -85,6 +87,21 @@ class ClassroomServices:
                 ).all()
             )
 
+            # fetch classroom courses
+
+            courses = ClassroomCourseStaffRepository.filter(
+                db, classroom_id=classroom.id
+            )
+
+            # enrollments
+            students = (
+                db.query(Student)
+                .join(Enrollment, Student.id == Enrollment.student_id)
+                .join(Media, and_(Media.entity_id == Student.id, Media.media_type == "profile"))
+                .filter(Enrollment.classroom_id == classroom.id)
+                .all()
+            )
+
             next_level = classroom.school_class.level + 1
             previous_level = classroom.school_class.level - 1
 
@@ -108,6 +125,8 @@ class ClassroomServices:
 
             return {
                 **classroom.model_dump(),
+                "courses": [course.model_dump() for course in courses],
+                "students": [student.to_pydantic().model_dump() for student in students],
                 "sections": [section.to_pydantic().model_dump() for section in sections],
                 "next_id": next_classroom.id if next_classroom else None,
                 "previous_id": previous_classroom.id if previous_classroom else None
@@ -157,6 +176,59 @@ class ClassroomServices:
                 return created
         except Exception as e:
             logger.error(f"Service: Error assigning classroom course: {e}")
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    def assign_classroom_staff(db: Session, request: AssignClassroomStaffRequest):
+        try:
+            with db.begin():
+                classroom = ClassroomRepository.get(db, id=request.classroom_id)
+                
+                if not classroom:
+                    raise RecordNotFoundException("Classroom", request.classroom_id)
+                
+                staff = StaffRepository.get(db, id=request.staff_id)
+                
+                if not staff:
+                    raise RecordNotFoundException("Staff", request.staff_id)
+
+                # check if the staff has already been assigned to this classroom
+                already_assigned = ClassroomStaffAssignmentRepository.get(
+                    db,
+                    classroom_id=classroom.id,
+                    staff_id=staff.id
+                )
+
+                if already_assigned:
+                    raise RecordAlreadyExistsException("Classroom Staff", already_assigned.id)
+                
+                created_by_id = get_user_id_email().get("id")
+                # if head is true, update the previous head to false
+                if request.head:
+                    ClassroomStaffAssignmentRepository.update(
+                        db,
+                        {"head": False, "updated_by_id": created_by_id, "updated_at": datetime.now(timezone.utc)},
+                        {"classroom_id": classroom.id}
+                    )
+                
+                data = ClassroomStaffAssignmentDomain(
+                    classroom_id=classroom.id,
+                    staff_id=staff.id,
+                    head=request.head,
+                    created_by_id=created_by_id,
+                    updated_by_id=created_by_id
+                )
+
+                created = ClassroomStaffAssignmentRepository.create(
+                    db,
+                    data
+                )
+
+                return created
+        except Exception as e:
+            logger.error(f"Service: Error assigning classroom staff: {e}")
             db.rollback()
             raise
         finally:

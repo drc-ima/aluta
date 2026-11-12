@@ -1,8 +1,10 @@
 import os, time, uuid
 from contextlib import asynccontextmanager
 
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 from api.router import api_router
+from core import BASE_DIR
 from middlewares.context.request import (
     auth_token_context,
     request_id_context,
@@ -120,6 +122,11 @@ async def add_request_id_and_elapsed_time(request: Request, call_next):
         f"Request {request_id} | {request.method} {request.url.path} | Params: {params} | Elapsed: {elapsed_time:.4f}s"
     )
     return response
+
+MEDIA_DIR = BASE_DIR / os.getenv("MEDIA_PATH")
+MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+
+app.mount("/media", StaticFiles(directory=MEDIA_DIR), name="media")
 
 app.include_router(
     api_router,

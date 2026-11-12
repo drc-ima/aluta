@@ -1,8 +1,8 @@
 import { useParams } from "react-router-dom"
 import StaffModule from "./staff"
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { useUserDefaultsProvider } from "@/contexts/userDefaultProvider";
-import type { SchoolModuleT } from "@/types/staff";
+
 import CoursesModule from "./courses";
 import StudentModule from "./students";
 import ClassesModule from "./classes";
@@ -10,22 +10,28 @@ import AcademicsModule from "./academics";
 
 export default function ModulePage(){
     const { moduleSlug } = useParams();
-    const [selectedModule, setSelectedModule] = useState<SchoolModuleT|null>(null)
+    // const [selectedModule, setSelectedModule] = useState<SchoolModuleT|null>(null)
     const { selectedSchool } = useUserDefaultsProvider()
     
-    const modulesPages: Record<string, React.JSX.Element> = {
+    const selectedModule = useMemo(() => {
+        if (!moduleSlug) return null;
+        if(!selectedSchool) return null;
+        const module = selectedSchool.modules.find((module) => module?.module.slug === moduleSlug)
+        return module ? module : null
+    }, [moduleSlug, selectedSchool])
+
+    const modulesPages: Record<string, React.JSX.Element> = useMemo(() => {
+        return {
         staff: <StaffModule module={selectedModule} />,
         courses: <CoursesModule module={selectedModule} />,
         students: <StudentModule module={selectedModule} />,
         classes: <ClassesModule module={selectedModule} />,
         academics: <AcademicsModule module={selectedModule} />
     }
-    useEffect(() => {
-        if(!moduleSlug) return;
-        if(!selectedSchool) return;
-        const module = selectedSchool.modules.find((module) => module.module.slug === moduleSlug) || null
-        setSelectedModule(module)
-    }, [moduleSlug, selectedSchool])
+    }, [selectedModule])
+    
+
+
     return (
         moduleSlug ? modulesPages[moduleSlug] : null
     )

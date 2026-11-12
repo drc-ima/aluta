@@ -8,6 +8,7 @@ import { SidebarNav } from "@/components/sidebarNav"
 import { Separator } from "@/components/ui/separator"
 import ClassroomStudents from "./classroomPages/students"
 import ClassroomCourses from "./classroomPages/courses"
+import ClassroomTeachers from "./classroomPages/teachers"
 
 
 
@@ -21,10 +22,15 @@ export default function ClassroomDetails() {
     const activeTab = searchParams.get("tab")
     const tabs = [
         {
-            title: 'Enrollments',
+            title: 'Classroom Teachers',
+            href: '?tab=teachers',
+            isActive: activeTab === "teachers" || !activeTab
+        },
+        {
+            title: 'Students',
             href: '?tab=students',
-            isActive: activeTab === "students" || !activeTab
-    },
+            isActive: activeTab === "students"
+        },
         {
             title: 'Courses',
             href: '?tab=courses',
@@ -66,7 +72,7 @@ export default function ClassroomDetails() {
                 {
                     children: <ChevronLeft />,
                     variant: "secondary",
-                    size: "sm",
+                    size: "icon",
                     title: "Previous Classroom",
                     type: "button",
                     className: "rounded-full!",
@@ -79,7 +85,7 @@ export default function ClassroomDetails() {
                     children: <ChevronRight />,
                     variant: "secondary",
                     title: "Next Classroom",
-                    size: "sm",
+                    size: "icon",
                     className: "rounded-full!",
                     type: "button",
                     disabled: classroom?.next_id === null || undefined,
@@ -95,9 +101,20 @@ export default function ClassroomDetails() {
                     <SidebarNav items={tabs} />
                 </aside>
                 <div className='flex w-full overflow-y-hidden p-1'>
-                    <ClassroomStudents />
+                    <ClassroomTeachers 
+                        teachers={classroom ? classroom.staff_assignments: []}
+                        loading={loading}
+                        refetchClassroom={refetchClassroom}
+                    />
+                    <ClassroomStudents
+                        students={classroom ? classroom.students : []}
+                        loading={loading}
+                        refetchClassroom={refetchClassroom}
+                    />
                     <ClassroomCourses
                         refetchClassroom={refetchClassroom}
+                        courses={classroom ? classroom.courses : []}
+                        loading={loading}
                     />
                 </div>
             </div>

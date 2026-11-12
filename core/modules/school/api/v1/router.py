@@ -1,5 +1,10 @@
 from fastapi import APIRouter
-from modules.school.api.v1.routes import academic_period, classroom, school
+from modules.school.api.v1.routes import (
+    academic_period, 
+    classroom, 
+    enrollment, 
+    school
+)
 
 school_router = APIRouter()
 
@@ -16,3 +21,6 @@ school_router.include_router(
     classroom.router,
 )
 
+school_router.include_router(
+    enrollment.router
+)

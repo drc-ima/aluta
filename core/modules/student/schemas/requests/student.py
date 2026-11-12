@@ -1,30 +1,39 @@
-from datetime import date
+from datetime import datetime
 from typing import Optional
 import uuid
 
-from fastapi import UploadFile
-from pydantic import EmailStr
+from fastapi import UploadFile, File
+from pydantic import EmailStr, Field
 
 from shared.data.schemas.domain import StudentGender
 from shared.data.schemas.requests.base_request import BaseRequest
 
 
-class CreateGuardianRequest(BaseRequest):
+class GuardianRequest(BaseRequest):
     first_name: str
-    middle_name: Optional[str] = None
+    # middle_name: Optional[str] = None
     last_name: str
     phone: str
     email: Optional[EmailStr] = None
+    guardian_id: Optional[uuid.UUID] = None
+    relationship_type: str
 
+class Profile(BaseRequest):
+    filename: str
+    data: str
 
-class CreateStudentRequest(BaseRequest):
+class StudentBioRequest(BaseRequest):
     first_name: str
     middle_name: Optional[str] = None
     last_name: str
-    date_of_birth: date
+    date_of_birth: datetime
     gender: StudentGender
-    admission_date: Optional[date] = None
+    admission_date: Optional[datetime] = None
     admission_number: str
-    guadian_id: Optional[uuid.UUID] = None
-    guardian: CreateGuardianRequest
-    profile: Optional[UploadFile] = None
+    profile: Optional[Profile] = None
+    classroom_id: uuid.UUID
+    enrolled_at: datetime
+
+class CreatedStudentRequest(BaseRequest):
+    bio: StudentBioRequest
+    guardians: list[GuardianRequest] = Field(default_factory=list)

@@ -133,3 +133,4 @@ class StaffRepository(BaseRepository[Staff, StaffDomain]):
             "limit": limit,
             "total_pages": (total + limit - 1) // limit,
         }
+

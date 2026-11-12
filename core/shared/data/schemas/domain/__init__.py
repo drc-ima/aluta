@@ -366,7 +366,7 @@ class CourseDomain(AuditSchemaMixin, BaseModel):
     is_active: bool
     department_id: Optional[uuid.UUID] = None
     school_id: uuid.UUID
-    classes: list["ClassroomCourseStaffDomain"] = Field(default_factory=list)
+    # classrooms: list["ClassroomCourseStaffDomain"] = Field(default_factory=list)
     department: Optional[DepartmentDomain] = None
 
 
@@ -378,6 +378,7 @@ class ClassroomCourseStaffDomain(AuditSchemaMixin, BaseModel):
     academic_period_id: uuid.UUID
     course: Optional[CourseDomain] = None
     staff: Optional[StaffDomain] = None
+    enrollments: list["EnrollmentCourseDomain"] = Field(default_factory=list)
     # classroom: Optional["ClassroomDomain"] = None
 
 
@@ -393,12 +394,13 @@ class SchoolClassDomain(AuditSchemaMixin, BaseModel):
     active: bool
 
 
-class ClassStaffAssignmentDomain(AuditSchemaMixin, BaseModel):
+class ClassroomStaffAssignmentDomain(AuditSchemaMixin, BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    class_id: uuid.UUID
+    classroom_id: uuid.UUID
     staff_id: uuid.UUID
-    academic_period_id: uuid.UUID
+    head: bool
 
+    staff: Optional[StaffDomain] = None
 
 class StudentGender(str, Enum):
     Male = "MALE"
@@ -411,7 +413,9 @@ class StudentDomain(AuditSchemaMixin, BaseModel):
     first_name: str
     middle_name: Optional[str] = None
     last_name: str
+    full_name: Optional[str] = None
     date_of_birth: date
+    age: Optional[int] = None
     gender: StudentGender
     admission_date: Optional[date] = None
     admission_number: str
@@ -421,8 +425,10 @@ class StudentDomain(AuditSchemaMixin, BaseModel):
     
     campus: Optional["CampusDomain"] = None
     school: Optional["SchoolDomain"] = None
+
+    media: list[MediaDomain] = Field(default_factory=list)
     
-    guardians: list["StudentGuardianDomain"] = Field(default_factory=list)
+    # guardians: list["StudentGuardianDomain"] = Field(default_factory=list)
     
     enrollments: list["EnrollmentDomain"] = Field(default_factory=list)
 
@@ -437,7 +443,7 @@ class GuardianDomain(AuditSchemaMixin, BaseModel):
     phone: Optional[str] = None
     email: Optional[str] = None
     school: Optional["SchoolDomain"] = None
-    students: list["StudentGuardianDomain"] = Field(default_factory=list)
+    # students: list["StudentGuardianDomain"] = Field(default_factory=list)
 
 
 class StudentGuardianDomain(AuditSchemaMixin, BaseModel):
@@ -451,7 +457,7 @@ class StudentGuardianDomain(AuditSchemaMixin, BaseModel):
     can_collect: bool = False
     receives_updates: bool = True
 
-    student: Optional["StudentDomain"] =None
+    student: Optional["StudentDomain"] = None
     guardian: Optional["GuardianDomain"] = None
 
 
@@ -463,8 +469,9 @@ class ClassroomDomain(AuditSchemaMixin, BaseModel):
 
     academic_period: Optional["AcademicPeriodDomain"] = None
     school_class: Optional[SchoolClassDomain] = None
-    courses: list[ClassroomCourseStaffDomain] = Field(default_factory=list)
-    enrollments: list["EnrollmentDomain"] = Field(default_factory=list)
+    staff_assignments: list[ClassroomStaffAssignmentDomain] = Field(default_factory=list)
+    courses_count: Optional[int] = None
+    enrollments_count: Optional[int] = None
 
 class EnrollmentDomain(AuditSchemaMixin, BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -475,9 +482,9 @@ class EnrollmentDomain(AuditSchemaMixin, BaseModel):
     enrolled_at: date
     left_at: Optional[date] = None
 
-    student: Optional["StudentDomain"] = None
+    # student: Optional["StudentDomain"] = None
     classroom: Optional["ClassroomDomain"] = None
-    statuses: list["EnrollmentStatusDomain"] = Field(default_factory=list)
+    # statuses: list["EnrollmentStatusDomain"] = Field(default_factory=list)
 
 
 class EnrollmentStatusDomain(AuditSchemaMixin, BaseModel):
@@ -496,3 +503,22 @@ class EnrollmentCourseDomain(AuditSchemaMixin, BaseModel):
 
     enrollment_id: uuid.UUID
     course_id: uuid.UUID
+    total_scores: Optional[float] = None
+    assessment_count: Optional[int] = None
+
+
+class AssessmentType(str, Enum):
+    EXAMINATION = "Examination"
+    MID_PERIOD = "Mid-Period"
+    QUIZ = "Quiz"
+
+
+class EnrollmentCourseAssessmentDomain(AuditSchemaMixin, BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    enrollment_course_id: uuid.UUID
+    assessment_type: AssessmentType
+    earned_score: float
+    max_score: float
+    remarks: Optional[str] = None
+    enrollment_course: Optional[EnrollmentCourseDomain] = None

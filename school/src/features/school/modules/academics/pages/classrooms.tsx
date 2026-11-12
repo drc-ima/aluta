@@ -37,8 +37,8 @@ export default function Classrooms() {
                             key={index} 
                             title={classroom.school_class.name + "" + (classroom.school_class.section ? " " + classroom.school_class.section : "")} 
                             attrs={[
-                                {key: "Students", value: `0 / ${classroom.school_class.capacity}`},
-                                {key: "Courses", value: 0}
+                                {key: "Students", value: `${classroom.enrollments_count} / ${classroom.school_class.capacity}`},
+                                {key: "Courses", value: classroom.courses_count}
                             ]}
                             href={`/academics/classrooms/${classroom.id}`}
                         />

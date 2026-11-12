@@ -73,12 +73,12 @@ export function UserDefaultsProvider({
     } = useUpdateDefaults()
 
     const selectedSchool = useMemo(() => {
-        if (loadingSettings) return null;
+
 
         return schools?.data?.find(
             school => school.id === defaults?.["School"]
         ) || null;
-    }, [defaults?.School, loadingSettings, schools.data]);
+    }, [defaults?.School, schools.data]);
 
     const selectedCampus = useMemo(() => {
         if (!selectedSchool) return null;

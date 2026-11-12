@@ -1,7 +1,9 @@
 import { useAuth } from "@/contexts/authProvider";
 import type { ClassroomCourseStaffPayload, ClassroomPayload } from "@/types/schoolClass";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { classroomDetailsApi, classroomsApi, createBulkClassroomsApi, createClassroomCourseStaffApi } from "./api";
+import { assignClassroomStaffApi, classroomDetailsApi, classroomsApi, createBulkClassroomsApi, createClassroomCourseStaffApi, enrollStudentApi } from "./api";
+import type { EnrollStudentPayload } from "@/types/student";
+import type { ClassroomStaffPayload } from "@/types/staff";
 
 
 export function useCreateBulkClassrooms(school_id: string, academic_period_id: string) {
@@ -37,5 +39,21 @@ export function useCreateClassroomCourseStaff(school_id: string) {
 
     return useMutation({
         mutationFn: (payload: ClassroomCourseStaffPayload | any) => createClassroomCourseStaffApi(fetchInstance, school_id, payload)
+    })
+}
+
+export function useEnrollStudent(school_id: string) {
+    const { fetchInstance } = useAuth()
+
+    return useMutation({
+        mutationFn: (payload: EnrollStudentPayload | any) => enrollStudentApi(fetchInstance, school_id, payload)
+    })
+}
+
+export function useAssignClassroomStaff(school_id: string) {
+    const { fetchInstance } = useAuth()
+
+    return useMutation({
+        mutationFn: (payload: ClassroomStaffPayload | any) => assignClassroomStaffApi(fetchInstance, school_id, payload)
     })
 }

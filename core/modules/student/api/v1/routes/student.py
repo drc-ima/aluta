@@ -1,10 +1,11 @@
+import json
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from middlewares.logging.logger import logger
-from modules.student.schemas.requests.student import CreatestudentRequest
-from modules.student.services.student import studentServices
+from modules.student.schemas.requests.student import CreatedStudentRequest
+from modules.student.services.student import StudentServices, StudentServices
 from modules.school.schemas.responses import SchoolResponse
 from shared.data.session import get_db
 from shared.utils.permissions import school_require_permission
@@ -13,15 +14,29 @@ from shared.utils.permissions import school_require_permission
 router = APIRouter(tags=["Staff", "Schools"])
 
 
-@router.get("/{campus_id}", status_code=200)
-def campus_students(
-    campus_id: uuid.UUID,
+@router.get("/{school_id}", status_code=200)
+def school_students(
+    school_id: uuid.UUID,
     db: Session = Depends(get_db),
     user: dict = Depends(school_require_permission("students:write", "students:read")),
+    page: int = 1,
+    limit: int = 20,
+    search: str = "",
+    filters: str = "",
+    sortBy: str = "",
+    sortOrder: str = ""
 ):
     try:
         logger.info(f"Router: Fetching school students.")
-        students = StudentServices.get_campus_students(db, campus_id)
+        params = {
+            "page": page,
+            "limit": limit,
+            "search": search,
+            "filters": json.loads(filters) if filters else [],
+            "sortBy": sortBy,
+            "sortOrder": sortOrder
+        }
+        students = StudentServices.get_school_students(db, school_id, **params)
 
         return students
     except HTTPException as e:
@@ -34,10 +49,11 @@ def campus_students(
         )
 
 
-@router.post("/{campus_id}", status_code=201, response_model=SchoolResponse)
-def create_school_student(
+@router.post("/{school_id}/{campus_id}", status_code=201, response_model=SchoolResponse)
+async def create_school_student(
     school_id: uuid.UUID,
-    request: CreatestudentRequest,
+    campus_id: uuid.UUID,
+    request: CreatedStudentRequest,
     db: Session = Depends(get_db),
     user: dict = Depends(
         school_require_permission("students:write")
@@ -46,7 +62,7 @@ def create_school_student(
     try:
         logger.info(f"Router: Creating school student")
     
-        studentServices.create_school_student(db, request, school_id)
+        await StudentServices.create_campus_student(db, request, campus_id, school_id)
     
         return SchoolResponse(
             message="New student added", school_id=school_id

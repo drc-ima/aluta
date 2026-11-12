@@ -10,8 +10,8 @@ import {
 import { toDateString } from '@/libs/utils'
 
 type DatePickerProps = {
-  selected: string | undefined
-  onSelect: (date: string| undefined) => void
+  selected: Date | undefined
+  onSelect: (date: Date| undefined) => void
   placeholder?: string,
   disabled?: boolean,
   minDate?: Date,
@@ -28,7 +28,7 @@ export function DatePicker({
 }: DatePickerProps) {
   const _min = minDate || new Date('1900-01-01')
 
-
+  const selectedDateString = toDateString(selected)
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -50,18 +50,20 @@ export function DatePicker({
         <Calendar
           mode='single'
           captionLayout='dropdown'
-          selected={selected ? new Date(`${selected}T12:00:00`) : undefined}
+          selected={selected ? new Date(`${selectedDateString}T12:00:00`) : undefined}
           onSelect={(selectedDate) => {
-            const date = toDateString(selectedDate)
-            onSelect(date)
+            // const date = toDateString(selectedDate)
+            onSelect(selectedDate)
           }}
-          disabled={(date: Date) => {
-            if (maxDate) {
-              return date > _min || date < maxDate
-            } else {
-              return date < _min
-            }
-          }}
+          // onSelect={onSelect}
+          disabled={maxDate !== undefined ? { before: _min, after: maxDate}: {before: _min}}
+          // disabled={(date: Date) => {
+          //   if (maxDate) {
+          //     return date > _min || date < maxDate
+          //   } else {
+          //     return date < _min
+          //   }
+          // }}
         // date > new Date() || date < new Date('1900-01-01')
         />
       </PopoverContent>

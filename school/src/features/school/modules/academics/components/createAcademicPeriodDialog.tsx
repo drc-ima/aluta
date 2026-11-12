@@ -18,8 +18,8 @@ import { toast } from "sonner";
 
 const formSchema = z.object({
     name: z.string().min(1, "Enter the discription of of the academic year."),
-    start_date: z.string(),
-    end_date: z.string(),
+    start_date: z.date(),
+    end_date: z.date(),
     parent_id: z.string().nullable()
 })
 
@@ -40,8 +40,8 @@ export default function CreateAcademicPeriodDialog({
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: "",
-            start_date: new Date().toString(),
-            end_date: new Date().toString(),
+            // start_date: new Date().toString(),
+            // end_date: new Date().toString(),
             parent_id: parent_id
         }
     })
@@ -144,7 +144,7 @@ export default function CreateAcademicPeriodDialog({
                                 <FormItem className='flex flex-col flex-1'>
                                     <FormLabel>Start Date</FormLabel>
                                     <DatePicker
-                                        selected={field.value.toString()}
+                                        selected={field.value}
                                         onSelect={field.onChange} />
                                     <FormMessage />
                                 </FormItem>
@@ -156,7 +156,7 @@ export default function CreateAcademicPeriodDialog({
                             render={({ field }) => (
                                 <FormItem className='flex flex-col flex-1'>
                                     <FormLabel>End Date</FormLabel>
-                                    <DatePicker selected={field.value.toString()} onSelect={field.onChange} />
+                                    <DatePicker selected={field.value} onSelect={field.onChange} />
 
                                     <FormMessage />
                                 </FormItem>

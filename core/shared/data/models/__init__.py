@@ -8,10 +8,12 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
     func,
+    inspect,
     text,
 )
 from sqlalchemy.orm import (
@@ -25,14 +27,16 @@ from sqlalchemy.orm import (
 from shared.data.schemas.domain import (
     EMPLOYMENT_TYPE,
     AcademicPeriodDomain,
+    AssessmentType,
     CampusContactDomain,
     CampusDomain,
     ClassroomCourseStaffDomain,
-    ClassStaffAssignmentDomain,
+    ClassroomStaffAssignmentDomain,
     ClassroomDomain,
     ContactType,
     CourseDomain,
     DepartmentDomain,
+    EnrollmentCourseAssessmentDomain,
     EnrollmentCourseDomain,
     EnrollmentDomain,
     EnrollmentStatusDomain,
@@ -589,9 +593,6 @@ class AcademicPeriod(AuditMixin, Base):
         foreign_keys=[parent_id],
         passive_deletes=True,
     )
-    classroom_staff_assigments: Mapped[list["ClassroomStaffAssignment"]] = relationship(
-        back_populates="academic_period"
-    )
     classrooms: Mapped[list["Classroom"]] = relationship(
         back_populates="academic_period"
     )
@@ -669,6 +670,8 @@ class Media(AuditMixin, Base):
     media_type: Mapped[str] = mapped_column(String)
     metadatas: Mapped[str] = mapped_column(String, nullable=True)
 
+    student: Mapped["Student"] = relationship(back_populates="media", primaryjoin="Student.id == foreign(Media.entity_id)")
+
     def to_pydantic(self):
         return MediaDomain.model_validate(self)
 
@@ -694,7 +697,7 @@ class Course(AuditMixin, Base):
     school: Mapped[School] = relationship(
         back_populates="courses", foreign_keys="[Course.school_id]"
     )
-    staffs: Mapped[list["ClassroomCourseStaff"]] = relationship(
+    classrooms: Mapped[list["ClassroomCourseStaff"]] = relationship(
         back_populates="course", foreign_keys="[ClassroomCourseStaff.course_id]"
     )
 
@@ -739,7 +742,7 @@ class ClassroomCourseStaff(AuditMixin, Base):
     )
 
     course: Mapped[Course] = relationship(
-        back_populates="staffs", foreign_keys="[ClassroomCourseStaff.course_id]"
+        back_populates="classrooms", foreign_keys="[ClassroomCourseStaff.course_id]"
     )
     classroom: Mapped["Classroom"] = relationship(
         back_populates="courses", foreign_keys="[ClassroomCourseStaff.classroom_id]"
@@ -798,8 +801,8 @@ class ClassroomStaffAssignment(AuditMixin, Base):
     __table_args__ = (
         UniqueConstraint(
             "classroom_id",
-            "academic_period_id",
-            name="uq_class_teacher_assignment_period",
+            "staff_id",
+            name="uq_class_teacher_assignment",
         ),
     )
 
@@ -815,11 +818,7 @@ class ClassroomStaffAssignment(AuditMixin, Base):
         index=True,
     )
 
-    academic_period_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("academic_period.id"),
-        nullable=False,
-        index=True,
-    )
+    head: Mapped[bool] = mapped_column(Boolean, server_default="0", default=False)
 
     classroom: Mapped["Classroom"] = relationship(
         back_populates="staff_assignments",
@@ -829,13 +828,9 @@ class ClassroomStaffAssignment(AuditMixin, Base):
         back_populates="classroom_assignments",
         foreign_keys="[ClassroomStaffAssignment.staff_id]",
     )
-    academic_period: Mapped[AcademicPeriod] = relationship(
-        back_populates="classroom_staff_assigments",
-        foreign_keys="[ClassroomStaffAssignment.academic_period_id]",
-    )
 
     def to_pydantic(self):
-        return ClassStaffAssignmentDomain.model_validate(self)
+        return ClassroomStaffAssignmentDomain.model_validate(self)
 
 
 class Student(AuditMixin, Base):
@@ -865,7 +860,23 @@ class Student(AuditMixin, Base):
     guardians: Mapped[list["StudentGuardian"]] = relationship(back_populates="student")
 
     enrollments: Mapped[list["Enrollment"]] = relationship(back_populates="student")
+    media: Mapped[list[Media]] = relationship(back_populates="student", primaryjoin="Student.id == foreign(Media.entity_id)")
+    
+    @property
+    def age(self) -> int:
+        today = date.today()
 
+        age = today.year - self.date_of_birth.year
+        has_birthday_passed = (today.month, today.day) >= (self.date_of_birth.month, self.date_of_birth.day)
+        if not has_birthday_passed:
+            age -= 1
+
+        return age
+
+    @property
+    def full_name(self) -> str:
+        return f"{self.first_name}{" " + self.middle_name if self.middle_name else ""} {self.last_name}"
+    
     def to_pydantic(self):
         return StudentDomain.model_validate(self)
 
@@ -968,6 +979,14 @@ class Classroom(AuditMixin, Base):
     )
     enrollments: Mapped[list["Enrollment"]] = relationship(back_populates="classroom")
 
+    @property
+    def enrollments_count(self) -> int:
+        return len(self.enrollments)
+
+    @property
+    def courses_count(self) -> int:
+        return len(self.courses)
+    
     def to_pydantic(self):
         return ClassroomDomain.model_validate(self)
 
@@ -1002,6 +1021,12 @@ class Enrollment(AuditMixin, Base):
 
     def to_pydantic(self):
         return EnrollmentDomain.model_validate(self)
+
+    def to_dict(self):
+        return {
+            column.key: getattr(self, column.key)
+            for column in inspect(self).mapper.column_attrs
+        }
 
 
 class EnrollmentStatus(AuditMixin, Base):
@@ -1038,7 +1063,7 @@ class EnrollmentCourse(AuditMixin, Base):
         index=True,
     )
     course_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("classroom_staff_assignment.id", ondelete="CASCADE"),
+        ForeignKey("classroom_course_staff.id", ondelete="CASCADE"),
         index=True,
     )
 
@@ -1051,5 +1076,47 @@ class EnrollmentCourse(AuditMixin, Base):
         foreign_keys="[EnrollmentCourse.course_id]"
     )
 
+    assessments: Mapped[list["EnrollmentCourseAssessment"]] = relationship(
+        back_populates="enrollment_course",
+        foreign_keys="[EnrollmentCourseAssessment.enrollment_course_id]"
+    )
+
+    @property
+    def total_score(self) -> float:
+        scores = [assessment.earned_score for assessment in self.assessments]
+        return sum(scores)
+
+    @property
+    def assessment_count(self) -> int:
+        return len(self.assessments)
+    
     def to_pydantic(self):
         return EnrollmentCourseDomain.model_validate(self)
+
+
+
+class EnrollmentCourseAssessment(AuditMixin, Base):
+    __tablename__ = "enrollment_course_assessment"
+
+    enrollment_course_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("enrollment_course.id", ondelete="CASCADE"),
+        index=True,
+    )
+    assessment_type: Mapped[AssessmentType] = mapped_column(
+        String(50), nullable=False
+    )
+    earned_score: Mapped[float] = mapped_column(
+        Numeric(2, 3), nullable=False
+    )
+    max_score: Mapped[float] = mapped_column(
+        Numeric(2, 3), nullable=False
+    )
+    remarks: Mapped[str] = mapped_column(Text, nullable=True)
+
+    enrollment_course: Mapped[EnrollmentCourse] = relationship(
+        back_populates="assessments",
+        foreign_keys="[EnrollmentCourseAssessment.enrollment_course_id]"
+    )
+
+    def to_pydantic(self):
+        return EnrollmentCourseAssessmentDomain.model_validate(self)

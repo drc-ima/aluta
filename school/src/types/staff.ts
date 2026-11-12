@@ -140,6 +140,12 @@ export type SchoolModuleT = {
     module: ModuleT
 }
 
+export type ClassroomStaffPayload = {
+    classroom_id: string
+    staff_id: string
+    head: boolean
+} & BodyInit
+
 // export type CampusT = {
 //     id: string
 //     name: string

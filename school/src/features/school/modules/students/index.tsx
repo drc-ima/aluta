@@ -2,6 +2,7 @@ import { useLayout } from "@/contexts/layoutProvider";
 import type { SchoolModuleT } from "@/types/staff";
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
+import Students from "./pages/students";
 
 export default function StudentModule({module}: { module: SchoolModuleT | null}) {
     const { changeNavLinks } = useLayout();
@@ -32,6 +33,10 @@ export default function StudentModule({module}: { module: SchoolModuleT | null})
     }, [module, nav, moduleSlug])
 
     return (
-        <></>
+        nav === "overview" || !nav ? (
+            <></>
+        ) : nav === "students" ? (
+            <Students />
+        ) : null
     )
 }

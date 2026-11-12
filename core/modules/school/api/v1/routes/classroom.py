@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from middlewares.logging.logger import logger
-from modules.school.schemas.requests.classrooms import AssignClassroomCourseStaffRequest, BulkCreateClassroomsRequest
+from modules.school.schemas.requests.classrooms import AssignClassroomCourseStaffRequest, AssignClassroomStaffRequest, BulkCreateClassroomsRequest
 from modules.school.schemas.responses import SchoolResponse
 from modules.school.services.classroom import ClassroomServices
 from shared.data.session import get_db
@@ -41,6 +41,33 @@ def assign_classroom_course_and_staff(
             status_code=500, detail=f"Failed  creating classrooms: {str(e)}"
         )
 
+
+@router.post(
+    "/staffs/{school_id}",
+    response_model=SchoolResponse
+)
+async def assign_classroom_staff(
+    school_id: uuid.UUID,
+    request: AssignClassroomStaffRequest,
+    db: Session = Depends(get_db),
+    user: dict = Depends(school_require_permission("academics:write"))
+):
+    try:
+        logger.info(f"Router: Registering a school...")
+        
+        ClassroomServices.assign_classroom_staff(db, request)
+        
+        return SchoolResponse(
+            message="New classroom course assigned", school_id=school_id
+        )
+    except HTTPException as e:
+        logger.error(f"Router: HTTP error assigning staff to classroom - {e.detail}")
+        raise e
+    except Exception as e:
+        logger.error(f"Router: Unexpected error assigning staff to classroom - {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed  assigning staff to classroom: {str(e)}"
+        )
 
 @router.post("/{school_id}/{academic_period_id}")
 async def create_ap_classrooms(
