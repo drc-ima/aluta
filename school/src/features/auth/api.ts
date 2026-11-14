@@ -74,3 +74,20 @@ export function registerApi(
     }
   )
 }
+
+export type ForgotPasswordPayload = {
+  username: string
+} & BodyInit
+
+export function forgotPasswordApi(
+  fetchInstance: FetchInstance,
+  payload: ForgotPasswordPayload
+) {
+  return fetchInstance(
+    API_ENDPOINTS.FORGOT_PASSWORD,
+    {
+      method: "POST",
+      body: payload
+    }
+  )
+}

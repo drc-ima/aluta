@@ -67,7 +67,7 @@ export default function Login() {
                 <h2 className='text-lg! font-semibold! tracking-tight'>Sign in</h2>
                 <p className='text-sm! text-muted-foreground'>
                     Enter your email and password below to log into{' '}
-                    <br className='max-sm:hidden' /> your school account.If your should is not registered yet {' '}
+                    <br className='max-sm:hidden' /> your school account.If your school is not registered yet {' '}
                     <Link
                         to='/register'
                         className='text-nowrap underline underline-offset-4 hover:text-primary'
@@ -78,13 +78,10 @@ export default function Login() {
             </div>
             <Form 
                 {...form}
-
             >
                 <form
-                    
                     className='flex flex-col gap-[1rem]'
                     onSubmit={form.handleSubmit(onSubmit)}
-
                 >
                     <FormField
                         control={form.control}

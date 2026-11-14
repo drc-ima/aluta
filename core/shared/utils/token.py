@@ -19,6 +19,8 @@ class TokenTypes(str, Enum):
     access = "access"
     refresh = "refresh"
     verify = "verify"
+    set_password = "set-password"
+
 
 @exception_catcher
 def token(

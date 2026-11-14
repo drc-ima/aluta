@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from middlewares.logging.logger import logger
 from modules.school.services.school import SchoolServices
-from modules.user.schemas.requests.user import UserDefaultRequest, UserDefaultsRequest, VerifyTokenResponse, VerifyTokenRequest
+from modules.user.schemas.requests.user import ForgotPasswordRequest, UserDefaultRequest, UserDefaultsRequest, VerifyTokenResponse, VerifyTokenRequest
 from modules.user.services.user import UserServices
 from shared.contents.emails import EMAIL_BODIES
 from shared.data.schemas.domain import SchoolDomain
@@ -179,4 +179,29 @@ def update_user_defaults(
         raise HTTPException(
             status_code=500, detail=f"Failed  fetching user school: {str(e)}"
         )
-    
+
+
+@router.post(
+    "/forgot-password",
+    response_model=VerifyTokenResponse,
+    status_code=200
+)
+def forgot_password(
+    request: ForgotPasswordRequest,
+    db: Session = Depends(get_db)
+):
+    try:
+        UserServices.forgot_password(db, request)
+
+        return VerifyTokenResponse(message=f"An email has been sent to {request.username}.")
+    except RecordNotFoundException as e:
+        logger.error(f"Router: User not found - {e.detail}")
+        raise e
+    except HTTPException as e:
+        logger.error(f"Router: HTTP error verifying user - {e.detail}")
+        raise e
+    except Exception as e:
+        logger.error(f"Router: Unexpected error verifying user - {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed  verifying user: {str(e)}"
+        )

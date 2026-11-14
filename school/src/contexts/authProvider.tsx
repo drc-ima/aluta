@@ -32,6 +32,8 @@ export const NO_AUTH_ROUTES: string[] = [
     "/",
     "/register",
     "/forgot-password",
+    "/set-password",
+    "/verify",
     "terms",
     "/privacy"
 ]

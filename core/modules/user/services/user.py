@@ -1,6 +1,8 @@
 
 
 from datetime import datetime, timezone
+import os
+from urllib.parse import urlencode
 import uuid
 
 from fastapi import HTTPException, status
@@ -8,18 +10,21 @@ from fastapi import HTTPException, status
 from handlers.exceptions import exception_catcher
 from middlewares.logging.logger import logger
 from modules.token.schemas.requests import TokenRequest
-from modules.user.schemas.requests.user import CreateUserRequest, UserDefaultRequest, UserDefaultsRequest, VerifyTokenRequest
+from modules.user.schemas.requests.user import CreateUserRequest, ForgotPasswordRequest, UserDefaultsRequest, VerifyTokenRequest
 from modules.user.services.role import RoleServices
-from shared.data.models import User, UserDefaultModule
+from shared.contents.emails import EMAIL_BODIES
+from shared.services.email import email_sender
+from shared.data.models import User
 from shared.data.repositories.module_repository import ModuleRepository
 from shared.data.repositories.user_default_repository import UserDefaultRepository
 from shared.data.repositories.user_repository import UserRepository
 from shared.data.schemas.domain import UserDefaultModuleDomain, UserDomain, UserInputDomain
+from shared.data.schemas.domain.email import EmailMessageSchema
 from shared.data.schemas.exceptions import RecordAlreadyExistsException, RecordNotFoundException
 from sqlalchemy.orm import Session
 
 from shared.utils.password import verify_password
-from shared.utils.token import TokenTypes, decode_token
+from shared.utils.token import TokenTypes, decode_token, token
 
 
 class UserServices:
@@ -194,6 +199,58 @@ class UserServices:
                     
         except Exception as e:
             logger.error(f"Service: Error setting defaults: {e}")
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    def forgot_password(db: Session, request: ForgotPasswordRequest):
+
+        try:
+            with db.begin():
+                # check if user with this email exists
+                user = UserRepository.get(db, username=request.username)
+
+                if not user:
+                    raise RecordNotFoundException("User", request.username)
+
+                # if the user is unverified and inactive, send verification link
+                if user.verified and not user.is_active:
+                    raise HTTPException(status_code=400, detail="User with this email has been deactivated. Please contact your admin to activate your account.")
+
+                set_password_token = token(
+                    user.id,
+                    TokenTypes.set_password,
+                    uuid.uuid4(),
+                    expires_delta="1d",
+                    upn=user.email,
+                    kind="staff",
+                    intent="set-password" if user.verified else "create-password"
+                )
+
+                frontend_url = os.getenv("FRONTEND_URL").rstrip("/")
+                def build_url(token: str) -> str:
+                    query = urlencode({"token": token})
+                    return f"{frontend_url}/set-password?{query}"
+
+                email_body = EMAIL_BODIES.get("set-password", {})
+
+                full_name = user.full_name
+                set_password_link = build_url(set_password_token)
+
+                email_text = email_sender.body_context(email_body.get("text"), full_name=full_name, set_password_link=set_password_link)
+                email_html = email_sender.body_context(email_body.get("html"), full_name=full_name, set_password_link=set_password_link)
+
+                email_message = EmailMessageSchema(
+                    to=[user.email,],
+                    subject="Password Reset @ Aluta",
+                    body=email_text,
+                    html_body=email_html
+                )
+
+                email_sender.send(data=email_message)
+        except Exception as e:
+            logger.error(f"Service: Error with forgot password: {e}")
             db.rollback()
             raise
         finally:

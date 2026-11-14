@@ -41,5 +41,23 @@ EMAIL_BODIES = {
             <p>Looks like your email address has been verified. </p>
             <p>From the kind people @ Aluta!</p>
         """
+    },
+    "set-password": {
+        "text": """
+            Heylo {full_name}, You have requested to change your password.
+            Click on the link below to do just that.
+            {set_password_link}
+            This link expires in 24 hours. If this action was not requested by you, you can just ignore it.
+
+            From all the kind folks @ Aluta!
+        """,
+        "html": """
+            <p>Heylo {full_name}, You have requested to change your password.</p>
+            <p>Click on the link below to do just that.</p>
+            <p>{set_password_link}</p>
+            <p>This link expires in 24 hours.</p>
+            <p>If this action was not requested by you, you can just ignore it.</p>
+            <p>From all the kind folks @ Aluta!</p>
+        """
     }
 }

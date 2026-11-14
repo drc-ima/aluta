@@ -1,5 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
-import { LoginPage, RegisterPage } from "./features/auth/pages";
+import { ForgotPassword, LoginPage, RegisterPage, SetPassword } from "./features/auth/pages";
 import { Dashboard } from "./features/school/pages";
 import { AuthLayoutComponent } from "./features/auth/components";
 import { Layout } from "./components/layout/layout";
@@ -20,6 +20,14 @@ const router = createBrowserRouter([
             {
                 path: "/register",
                 element: <RegisterPage />
+            },
+            {
+                path: "/forgot-password",
+                element: <ForgotPassword />
+            },
+            {
+                path: "/set-password",
+                element: <SetPassword />
             }
         ]
     },

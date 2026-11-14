@@ -1,6 +1,7 @@
 
 import os
 from urllib.parse import urlencode
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -50,8 +51,9 @@ def register(
 
         # verify token
         school_verify_token = token(
-            str(registration.id),
+            registration.id,
             TokenTypes.verify,
+            uuid.uuid4(),
             expires_delta="3d",
             upn=registration.business_email,
             kind="school",
@@ -59,8 +61,9 @@ def register(
         )
 
         creator_verify_token = token(
-            str(registration.created_by_id),
+            registration.created_by_id,
             TokenTypes.verify,
+            uuid.uuid4(),
             expires_delta="3d",
             upn=user.email,
             kind="staff",

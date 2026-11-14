@@ -47,3 +47,6 @@ class UserDefaultRequest(BaseRequest):
 
 class UserDefaultsRequest(BaseRequest):
     defaults: list[UserDefaultRequest] = []
+
+class ForgotPasswordRequest(BaseRequest):
+    username: EmailStr
