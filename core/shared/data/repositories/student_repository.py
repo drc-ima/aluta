@@ -70,6 +70,8 @@ class StudentRepository(BaseRepository[Student, StudentDomain]):
             .join(Media, and_(Media.entity_id == Student.id, Media.media_type == 'profile'))
             .filter(Student.school_id == school_id)
             .order_by(Student.admission_date)
+            .offset(offset)
+            .limit(limit)
         )
 
         students = db.scalars(statement).all()

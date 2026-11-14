@@ -11,7 +11,7 @@ from shared.data.session import get_db
 from shared.utils.permissions import school_require_permission
 
 
-router = APIRouter(tags=["Staff", "Schools"])
+router = APIRouter(tags=["Students", "Schools"])
 
 
 @router.get("/{school_id}", status_code=200)

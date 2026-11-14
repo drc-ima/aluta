@@ -1,7 +1,5 @@
 import {
   useMutation,
-  useQuery,
-  useQueryClient,
 } from "@tanstack/react-query";
 
 import { useAuth } from "@/contexts/authProvider";

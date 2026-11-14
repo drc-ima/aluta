@@ -108,6 +108,13 @@ class BaseRepository(Generic[ModelT, DomainT]):
         return [cast(DomainT, obj.to_pydantic()) for obj in objects]
 
     @classmethod
+    def delete(cls, db: Session, **kwargs: Unpack[DomainT]) -> None:
+
+        statement = (db.query(cls.model).filter_by(**kwargs))
+        statement.delete()
+
+        return None
+
     def upsert(
         cls,
         db: Session,
@@ -115,9 +122,15 @@ class BaseRepository(Generic[ModelT, DomainT]):
         data: DomainT,
         update_fields: list[str] | None = None
     ) -> DomainT: 
-        model_cls = cast(Any, cls.model)
-        data_obj = model_cls(**data.model_dump(exclude_unset=True))
 
+        data_obj = data.model_dump(exclude_unset=True)
+
+        if not conflict_fields:
+            raise ValueError("conflict_fields cannot be empty")
+
+        if not update_fields:
+            raise ValueError("No fields available for updating")
+        
         cls._validate_fields(conflict_fields)
 
         if update_fields is None:
@@ -128,12 +141,6 @@ class BaseRepository(Generic[ModelT, DomainT]):
             ]
 
         cls._validate_fields(update_fields)
-
-        if not conflict_fields:
-            raise ValueError("conflict_fields cannot be empty")
-
-        if not update_fields:
-            raise ValueError("No fields available for updating")
 
         stmt = pg_insert(cls.model).values(**data_obj)
 

@@ -2,7 +2,7 @@ import { API_ENDPOINTS } from "@/api/api.endpoints";
 import type { FetchInstance } from "@/types/fetchInstance";
 
 export interface LoginResponse {
-  access_token: string;
+  token: string;
   token_type: string;
 }
 

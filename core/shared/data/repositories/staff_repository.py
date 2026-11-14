@@ -76,9 +76,9 @@ class StaffRepository(BaseRepository[Staff, StaffDomain]):
 
         staff_query = select(Staff)
 
-        paginated_staff_ids = (
-            staff_query.order_by(Staff.id).offset(offset).limit(limit).subquery()
-        )
+        # paginated_staff_ids = (
+        #     staff_query.order_by(Staff.id).offset(offset).limit(limit).subquery()
+        # )
 
         if search:
             staff_query = staff_query.where(
@@ -119,6 +119,8 @@ class StaffRepository(BaseRepository[Staff, StaffDomain]):
             .outerjoin(Position, Position.id == StaffPosition.position_id)
             .filter(Staff.school_id == school_id)
             .order_by(Staff.staff_no)
+            .offset(offset)
+            .limit(limit)
         )
 
         staff = db.scalars(statement).all()

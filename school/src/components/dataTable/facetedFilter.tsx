@@ -28,13 +28,19 @@ type DataTableFacetedFilterProps<TData extends RowData, TValue> = {
     label: string
     value: string
     icon?: React.ComponentType<{ className?: string }>
-  }[]
+  }[],
+  shouldFilter?: boolean,
+  searchValue?: string,
+  onValueChange?: (search: string) => void
 }
 
 export function DataTableFacetedFilter<TData extends RowData, TValue>({
   column,
   title,
   options,
+  shouldFilter = true,
+  onValueChange = undefined,
+  searchValue = undefined
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const facets = column?.getFacetedUniqueValues()
   const selectedValues = new Set(column?.getFilterValue() as string[])
@@ -81,8 +87,12 @@ export function DataTableFacetedFilter<TData extends RowData, TValue>({
         </Button>
       </PopoverTrigger>
       <PopoverContent className='w-50 p-0' align='start'>
-        <Command>
-          <CommandInput placeholder={title} />
+        <Command shouldFilter={shouldFilter}>
+          <CommandInput 
+          placeholder={title} 
+          value={searchValue}
+          onValueChange={onValueChange}
+          />
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup>

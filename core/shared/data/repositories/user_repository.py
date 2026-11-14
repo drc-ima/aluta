@@ -7,12 +7,14 @@ from sqlalchemy.orm import Session, joinedload, contains_eager, selectinload
 
 from modules.user.schemas.requests.user import CreateUserRequest
 from shared.data.models import Permission, Role, User, UserPermission, UserRole
+from shared.data.repositories.repository import BaseRepository
 from shared.data.schemas.domain import UserDomain, UserInputDomain
 from shared.data.schemas.exceptions import RecordNotFoundException
 
 
-class UserRepository:
-
+class UserRepository(BaseRepository[User, UserDomain]):
+    model = User
+    
     def create_admin(self, db: Session, admin_data: CreateAdminRequest) -> UserDomain:
         user = User(
             first_name=admin_data.first_name,

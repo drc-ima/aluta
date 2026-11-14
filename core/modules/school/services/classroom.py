@@ -88,7 +88,6 @@ class ClassroomServices:
             )
 
             # fetch classroom courses
-
             courses = ClassroomCourseStaffRepository.filter(
                 db, classroom_id=classroom.id
             )

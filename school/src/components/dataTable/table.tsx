@@ -71,6 +71,7 @@ type Props<TData extends RowData> = {
     searchPlaceholder?: string;
     filterOptions?: ToolbarFilter[];
     setReactTable?: (table: any) => void
+    withHeader?: boolean
 };
 
 export function DataTable<TData extends RowData>({
@@ -84,6 +85,7 @@ export function DataTable<TData extends RowData>({
     searchKey,
     searchPlaceholder = "",
     filterOptions = [],
+    withHeader = true,
     setReactTable
 }: Props<TData>) {
     const [rowSelection, setRowSelection] = useState({});
@@ -150,7 +152,7 @@ export function DataTable<TData extends RowData>({
     }, [pageCount, pagination.pageIndex, ensurePageInRange]);
 
     useEffect(() => {
-        if(setReactTable) {
+        if (setReactTable) {
             setReactTable(table)
         }
     }, [])
@@ -167,6 +169,7 @@ export function DataTable<TData extends RowData>({
                 searchPlaceholder={searchPlaceholder}
                 searchKey={searchKey}
                 filters={filterOptions}
+                withHeader={withHeader}
             />
 
             {loading && (
@@ -174,32 +177,37 @@ export function DataTable<TData extends RowData>({
                     Loading results...
                 </p>
             )}
-
+        
             <div className="rounded-md border">
                 <Table>
-                    <TableHeader>
-                        {table.getHeaderGroups().map((group) => (
-                            <TableRow key={group.id}>
-                                {group.headers.map((header) => (
-                                    <TableHead
-                                        key={header.id}
-                                        colSpan={header.colSpan}
-                                        className={cn(
-                                            header.column.columnDef.meta?.className,
-                                            header.column.columnDef.meta?.thClassName
-                                        )}
-                                    >
-                                        {header.isPlaceholder
-                                            ? null
-                                            : flexRender(
-                                                header.column.columnDef.header,
-                                                header.getContext()
-                                            )}
-                                    </TableHead>
+                    {
+                        withHeader && (
+                            <TableHeader>
+                                {table.getHeaderGroups().map((group) => (
+                                    <TableRow key={group.id}>
+                                        {group.headers.map((header) => (
+                                            <TableHead
+                                                key={header.id}
+                                                colSpan={header.colSpan}
+                                                className={cn(
+                                                    header.column.columnDef.meta?.className,
+                                                    header.column.columnDef.meta?.thClassName
+                                                )}
+                                            >
+                                                {header.isPlaceholder
+                                                    ? null
+                                                    : flexRender(
+                                                        header.column.columnDef.header,
+                                                        header.getContext()
+                                                    )}
+                                            </TableHead>
+                                        ))}
+                                    </TableRow>
                                 ))}
-                            </TableRow>
-                        ))}
-                    </TableHeader>
+                            </TableHeader>
+                        )
+                    }
+
 
                     <TableBody className="">
                         {table.getRowModel().rows.length ? (

@@ -22,8 +22,9 @@ class TokenTypes(str, Enum):
 
 @exception_catcher
 def token(
-    id: str,
+    id: uuid.UUID,
     type: TokenTypes,
+    jwt_id: uuid.UUID,
     expires_delta: str | None = None,
     
     **other_payload: dict
@@ -44,10 +45,10 @@ def token(
         )
 
         payload = {
-            "sub": id,
+            "sub": str(id),
             "iat": now,
             "exp": expires_at,
-            "jwt": str(uuid.uuid4()),
+            "jwt": str(jwt_id),
             **other_payload
         }
 

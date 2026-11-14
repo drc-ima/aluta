@@ -14,11 +14,12 @@ import { Button } from "@/components/ui/button";
 import { DotsHorizontalIcon } from "@radix-ui/react-icons";
 import { UserIcon, UserPen } from "lucide-react";
 import { useTableUrlState } from "@/hooks/useTableUrlState";
+import { useEffect } from "react";
 
 
 export default function Staff() {
     const [searchParams, setSearchParams] = useSearchParams()
-    const { selectedSchool } = useUserDefaultsProvider()
+    const { selectedCampus, selectedSchool } = useUserDefaultsProvider()
 
     const filterConfig = [
         {
@@ -54,7 +55,7 @@ export default function Staff() {
         data: staffs,
         refetch
     } = useSchoolStaffs({
-        school_id: selectedSchool !== null ? selectedSchool?.id : "",
+        school_id: selectedCampus?.school_id!,
         params: {
             page: tableState.pagination.pageIndex + 1,
             limit: tableState.pagination.pageSize,
@@ -64,6 +65,12 @@ export default function Staff() {
         }
 
     })
+
+    useEffect(() => {
+        if (!selectedCampus) return
+        searchParams.set("location", `["${selectedCampus.id}"]`)
+        setSearchParams(searchParams)
+    }, [selectedCampus])
 
     const search = Object.fromEntries(searchParams.entries());
     return (

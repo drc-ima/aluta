@@ -3,6 +3,7 @@ import type { SchoolModuleT } from "@/types/staff";
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Students from "./pages/students";
+import Guardians from "./pages/guardians";
 
 export default function StudentModule({module}: { module: SchoolModuleT | null}) {
     const { changeNavLinks } = useLayout();
@@ -26,7 +27,7 @@ export default function StudentModule({module}: { module: SchoolModuleT | null})
                 title: "Guardians",
                 href: `${moduleSlug}/guardians`,
                 disabled: false,
-                isActive: nav === "guardian"
+                isActive: nav === "guardians"
             },
         ])
 
@@ -37,6 +38,8 @@ export default function StudentModule({module}: { module: SchoolModuleT | null})
             <></>
         ) : nav === "students" ? (
             <Students />
-        ) : null
+        ) : nav === "guardians" ? (
+            <Guardians />
+        ): null
     )
 }

@@ -20,6 +20,7 @@ class StaffUserRequest(BaseRequest):
     phone: Optional[str] = None
     role_id: Optional[uuid.UUID] = None
 
+
 class StaffPositionRequest(BaseRequest):
     position_id: uuid.UUID
     start_date: datetime

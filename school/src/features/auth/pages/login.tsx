@@ -47,13 +47,13 @@ export default function Login() {
                 toast.error(JSON.parse(error.message).detail)
             },
             onSuccess: (deta) => {
-                toast.success(`Welcome back ${data.username}!`)
-                localStorage.setItem("aluta_sess", deta.access_token)
+                console.log(deta)
+                toast.success(`Welcome back!`)
+                localStorage.setItem("aluta_sess", deta.token)
                 console.log(NO_AUTH_ROUTES.includes(redirectTo), redirectTo)
                 window.location.replace("/overview")
             },
         })
-
     }
     return (
         <div className='w-full h-full flex flex-col gap-[1rem] justify-center'>

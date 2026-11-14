@@ -73,9 +73,9 @@ export function AuthProvider({
         }).then(async (res) => {
             if (res.ok) {
                 const data = await res.json()
-                localStorage.setItem(ACCESS_TOKEN_KEY, data.access_token)
+                localStorage.setItem(ACCESS_TOKEN_KEY, data.token)
                     
-                    return data.access_token
+                    return data.token
 
             }
             return ""

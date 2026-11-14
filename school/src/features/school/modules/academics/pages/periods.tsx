@@ -31,7 +31,7 @@ export default function AcademicPeriods() {
                     size: "sm",
                     type: "button",
                     onClick: () => {
-                        searchParams.set("academicPeriod", "create")
+                        searchParams.set("academic-period", "create")
                         searchParams.set("parent_id", currentAcademicYear?.id!)
                         setSearchParams(searchParams)
                     }

@@ -1,3 +1,4 @@
+import type { MediaT } from "./media"
 
 export type StaffT = {
     id: string
@@ -13,6 +14,7 @@ export type StaffT = {
     school: SchoolT
     staff_departments: StaffDepartmentT[]
     staff_positions: StaffPositionT[]
+    media: MediaT[]
 }
 
 export type UserT = {

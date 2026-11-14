@@ -53,6 +53,15 @@ export enum GuardianRelationshipType {
     FamilyFriend = "Family Friend"
 }
 
+export type GuardianT = {
+    id: string
+    first_name: string
+    last_name: string
+    full_name: string
+    phone: string
+    email: string
+}
+
 export type EnrollStudentPayload = {
     classroom_id: string
     student_id: string

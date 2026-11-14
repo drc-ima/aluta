@@ -9,7 +9,9 @@ from middlewares.context.request import get_refresh_token
 from middlewares.logging.logger import logger
 from modules.token.schemas.requests import LoginRequest, TokenRequest
 from modules.token.schemas.responses import TokenResponse
+from modules.token.services.token import TokenServices
 from modules.user.services.user import UserServices
+from shared.data.schemas.domain import TokenDomain
 from shared.data.schemas.exceptions import RecordNotFoundException
 from shared.data.session import get_db, get_refreshtoken, get_user
 from shared.utils.token import TokenTypes, decode_token, token
@@ -27,42 +29,12 @@ def normal_login(request: TokenRequest, db: Session = Depends(get_db)):
 
         user = UserServices().login_service(db, request)
 
-        access_token = token(
-            str(user.id),
-            type=TokenTypes.access,
-            expires_delta="10m",
-            first_name=user.first_name,
-            last_name=user.last_name,
-            middle_name=user.middle_name,
-            user_type=user.user_type,
-            upn=user.username,
-            roles=[
-                {
-                    "id": str(role.id),
-                    "name": role.role.name,
-                    "school_id": str(role.role.school_id) if role.role.school_id else None,
-                    "permissions": [
-                        perm.permission.code_name for perm in role.role.role_permissions
-                    ],
-                }
-                for role in user.user_roles
-            ],
-            permissions=[perm.permission.code_name for perm in user.user_permissions],
-            # staffs=[
-            #     {
-            #         "id": str(staff.id),
-            #         "school_id": str(staff.school_id),
-            #         "campuses": [
-            #             str(campus.campus.id) for campus in staff.staff_campuses
-            #         ],
-            #     }
-            #     for staff in user.staffs
-            # ],
-        )
+        access_token: TokenDomain = TokenServices.login_access_token(db, user)
 
         refresh_token = token(
-            str(user.id),
+            user.id,
             type=TokenTypes.refresh,
+            jwt_id=access_token.id,
             expires_delta=None,
             first_name=user.first_name,
             last_name=user.last_name,
@@ -93,7 +65,7 @@ def normal_login(request: TokenRequest, db: Session = Depends(get_db)):
             # ],
         )
 
-        content = {"access_token": access_token}
+        content = access_token.model_dump(exclude=["id", "user_id", "created_at"])
 
         response = JSONResponse(content=content)
         response.set_cookie(
@@ -123,52 +95,12 @@ def generate_access_token(db: Session = Depends(get_db), refresh_token: str = De
     logger.info(f"Router: Signing user in...")
     try:
 
-        payload = decode_token(refresh_token, "refresh")
-
-        if not payload:
-            raise HTTPException(status_code=401, detail="User is unauthenticated")
-
-        user = UserServices().get_user_by_id(db, payload.get("sub"))
-
-        if not user:
-            raise HTTPException(status_code=400, detail=f"User with this name {payload.get("upn")} not found.")
-
+        access_token = TokenServices.refresh_access_token(db, refresh_token)
         
-        access_token = token(
-            str(user.id),
-            type=TokenTypes.access,
-            expires_delta="10m",
-            first_name=user.first_name,
-            last_name=user.last_name,
-            middle_name=user.middle_name,
-            user_type=user.user_type,
-            upn=user.username,
-            roles=[
-                {
-                    "id": str(role.id),
-                    "name": role.role.name,
-                    "school_id": str(role.role.school_id) if role.role.school_id else None,
-                    "permissions": [
-                        perm.permission.code_name for perm in role.role.role_permissions
-                    ],
-                }
-                for role in user.user_roles
-            ],
-            permissions=[perm.permission.code_name for perm in user.user_permissions],
-            # staffs=[
-            #     {
-            #         "id": str(staff.id),
-            #         "school_id": str(staff.school_id),
-            #         "campuses": [
-            #             str(campus.campus.id) for campus in staff.staff_campuses
-            #         ],
-            #     }
-            #     for staff in user.staffs
-            # ],
-        )
-        content = {"access_token": access_token}
+        content = access_token.model_dump(exclude=["id", "user_id", "created_at"])
         
         response = JSONResponse(content=content)
+
         return response
     except RecordNotFoundException as e:
         logger.error(f"Router: User not found - {e.detail}")
@@ -184,11 +116,20 @@ def generate_access_token(db: Session = Depends(get_db), refresh_token: str = De
 @router.post("/logout", response_class=JSONResponse, status_code=200)
 def logout(
     user: dict = Depends(get_user),
-    refresh_token: str = Depends(get_refreshtoken)
+    refresh_token: str = Depends(get_refreshtoken),
+    db: Session = Depends(get_db)
 ):  
-    content = {"message": "Logout successful"}
-    response = JSONResponse(content=content)
+    try:
+        TokenServices.revoke_token(db)
+        content = {"message": "Logout successful"}
+        response = JSONResponse(content=content)
+        
+        response.delete_cookie("_aluta_sess")
 
-    response.delete_cookie("_aluta_sess")
-
-    return response
+        return response
+    except HTTPException as e:
+        logger.error(f"Router: HTTP error logging in- {e.detail}")
+        raise e
+    except Exception as e:
+        logger.error(f"Router: Unexpected error logging in - {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to login: {str(e)}")

@@ -68,6 +68,16 @@ class EMPLOYMENT_TYPE(str, Enum):
     RESIGNED = "Resigned"
 
 
+class TokenDomain(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    token: str
+    token_type: str
+    revoked: bool
+    created_at: Optional[datetime] = None
+    user_id: Optional[uuid.UUID] = None
+
+
 class UserInputDomain(AuditSchemaMixin, BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -236,6 +246,8 @@ class StaffDomain(AuditSchemaMixin, BaseModel):
     # school: Optional[SchoolDomain] = None
     parent: Optional["StaffDomain"] = None
     # children: list["StaffDomain"] = Field(default_factory=list)
+
+    media: list["MediaDomain"] = Field(default_factory=list)
     staff_positions: list["StaffPositionDomain"] = Field(default_factory=list)
     staff_campuses: list["StaffCampusDomain"] = Field(default_factory=list)
     staff_departments: list["StaffDepartmentDomain"] = Field(default_factory=list)
@@ -443,6 +455,7 @@ class GuardianDomain(AuditSchemaMixin, BaseModel):
     phone: Optional[str] = None
     email: Optional[str] = None
     school: Optional["SchoolDomain"] = None
+    full_name: Optional[str] = None
     # students: list["StudentGuardianDomain"] = Field(default_factory=list)
 
 

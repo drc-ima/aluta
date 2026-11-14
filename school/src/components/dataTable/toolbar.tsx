@@ -24,8 +24,12 @@ type DataTableToolbarProps<TData extends RowData> = {
       label: string
       value: string
       icon?: React.ComponentType<{ className?: string }>
-    }[]
-  }[]
+    }[],
+    shouldFilter?: boolean,
+    searchValue?: string,
+    onValueChange?: (search: string) => void
+  }[],
+  withHeader?: boolean
 }
 
 export function DataTableToolbar<TData extends RowData>({
@@ -33,12 +37,15 @@ export function DataTableToolbar<TData extends RowData>({
   searchPlaceholder = 'Filter...',
   searchKey,
   filters = [],
+  withHeader= true,
 }: DataTableToolbarProps<TData>) {
   const { columnFilters } = table.store.state
   const [searchParam, setSearchParam] = useSearchParams()
   const [searchValue, setSearchValue] = useState<string>(searchParam.get(searchKey ?? "term") ?? "")
 
-
+  if(withHeader === false) {
+    return (<></>)
+  }
   const onSearchChange = (value: string) => {
     setSearchValue(value)
     if (value.length > 0) {
@@ -74,6 +81,9 @@ export function DataTableToolbar<TData extends RowData>({
                 column={column}
                 title={filter.title}
                 options={filter.options}
+                shouldFilter={filter.shouldFilter}
+                searchValue={filter.searchValue}
+                onValueChange={filter.onValueChange}
               />
             )
           })}
@@ -87,7 +97,7 @@ export function DataTableToolbar<TData extends RowData>({
             className='h-8 px-2 lg:px-3'
           >
             Reset
-            <Cross2Icon className='ms-2 h-4 w-4' />
+            <Cross2Icon className='ms-2 h-4 w-4 text-destructive!' />
           </Button>
         )}
       </div>

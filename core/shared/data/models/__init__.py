@@ -56,6 +56,7 @@ from shared.data.schemas.domain import (
     StudentDomain,
     StudentGender,
     StudentGuardianDomain,
+    TokenDomain,
     UserDefaultModuleDomain,
     UserPermissionDomain,
     UserRoleDomain,
@@ -113,6 +114,27 @@ class AuditMixin:
     def updated_by(cls) -> Mapped["User"]:
         return relationship("User", foreign_keys=f"[{cls.__name__}.updated_by_id]")
 
+
+class Token(Base):
+    __tablename__ = "token"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID, primary_key=True, index=True, server_default=text("gen_random_uuid()")
+    )
+    token: Mapped[str] = mapped_column(String, nullable=False)
+    token_type: Mapped[str] = mapped_column(String, nullable=False)
+    revoked: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    user_id: Mapped[uuid.UUID] =  mapped_column(
+        UUID, ForeignKey("user.id", ondelete="CASCADE"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        server_default=func.now(),
+    )
+
+    def to_pydantic(self):
+        return TokenDomain.model_validate(self)
 
 class User(AuditMixin, Base):
     __tablename__ = "user"
@@ -401,6 +423,7 @@ class Staff(AuditMixin, Base):
     staff_classrooms: Mapped[list["ClassroomCourseStaff"]] = relationship(
         back_populates="staff"
     )
+    media: Mapped[list["Media"]] = relationship(back_populates="staff", primaryjoin="Staff.id == foreign(Media.entity_id)")
 
     def to_pydantic(self):
         return StaffDomain.model_validate(self)
@@ -671,7 +694,8 @@ class Media(AuditMixin, Base):
     metadatas: Mapped[str] = mapped_column(String, nullable=True)
 
     student: Mapped["Student"] = relationship(back_populates="media", primaryjoin="Student.id == foreign(Media.entity_id)")
-
+    staff: Mapped[Staff] = relationship(back_populates="media", primaryjoin="Staff.id == foreign(Media.entity_id)")
+    
     def to_pydantic(self):
         return MediaDomain.model_validate(self)
 
@@ -903,6 +927,11 @@ class Guardian(AuditMixin, Base):
     def to_pydantic(self):
         return GuardianDomain.model_validate(self)
 
+    @property
+    def full_name(self) -> str:
+        return f"{self.first_name}{" " + self.last_name}"
+        
+
 
 class StudentGuardian(AuditMixin, Base):
     """Association object carrying details about the relationship."""
@@ -972,7 +1001,8 @@ class Classroom(AuditMixin, Base):
         back_populates="classrooms", foreign_keys="[Classroom.school_class_id]"
     )
     staff_assignments: Mapped[list[ClassroomStaffAssignment]] = relationship(
-        back_populates="classroom"
+        back_populates="classroom",
+        order_by="ClassroomStaffAssignment.head.desc()"
     )
     courses: Mapped[list[ClassroomCourseStaff]] = relationship(
         back_populates="classroom"

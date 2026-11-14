@@ -53,5 +53,8 @@ export const API_ENDPOINTS = {
     CREATE_STUDENT: (school_id: string, campus_id: string) => `/students/${school_id}/${campus_id}`,
 
     // ENROLLMENTS
-    ENROLL_STUDENT: (school_id: string) => `/school/enrollments/${school_id}`
+    ENROLL_STUDENT: (school_id: string) => `/school/enrollments/${school_id}`,
+
+    // GUARDIANS
+    FETCH_GUARDIANS: (school_id: string) => `/students/guardians/${school_id}`
 }
